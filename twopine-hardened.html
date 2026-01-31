@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TwoPine — Sound · Software · Hardware</title>
   <!-- React with SRI hashes for integrity verification -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" 
@@ -23,12 +23,9 @@
       font-family: 'Josefin Sans', 'Futura', 'Century Gothic', sans-serif;
       background: #FDF6E3;
       overflow-x: hidden;
-      -webkit-tap-highlight-color: transparent;
     }
     a, button { cursor: pointer; }
     ::selection { background: #E07B3C; color: #FDF6E3; }
-    /* Prevent pull-to-refresh on mobile */
-    html, body { overscroll-behavior: none; }
   </style>
 </head>
 <body>
@@ -51,21 +48,9 @@
       darkBrown: '#3D2E24',
     };
 
-    // Hook to detect mobile
-    const useIsMobile = () => {
-      const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-      useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
-      return isMobile;
-    };
-
     // Navigation Component
-    const Navigation = ({ currentPage, setCurrentPage, isMobile }) => {
+    const Navigation = ({ currentPage, setCurrentPage }) => {
       const [scrolled, setScrolled] = useState(false);
-      const [menuOpen, setMenuOpen] = useState(false);
 
       useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -76,83 +61,50 @@
       return e('nav', {
         style: {
           position: 'fixed', top: 0, left: 0, right: 0,
-          padding: isMobile ? '12px 20px' : (scrolled ? '16px 40px' : '24px 40px'),
+          padding: scrolled ? '16px 40px' : '24px 40px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           zIndex: 1000,
-          background: scrolled || menuOpen ? 'rgba(253, 246, 227, 0.95)' : 'transparent',
-          backdropFilter: scrolled || menuOpen ? 'blur(10px)' : 'none',
+          background: scrolled ? 'rgba(253, 246, 227, 0.95)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(10px)' : 'none',
           borderBottom: scrolled ? '1px solid rgba(93, 64, 55, 0.1)' : 'none',
           transition: 'all 0.3s ease',
         }
       },
         e('div', {
           onClick: () => setCurrentPage('home'),
-          style: { fontSize: isMobile ? '14px' : '16px', letterSpacing: isMobile ? '3px' : '5px', fontWeight: '500', textTransform: 'uppercase', cursor: 'pointer' }
+          style: { fontSize: '16px', letterSpacing: '5px', fontWeight: '500', textTransform: 'uppercase', cursor: 'pointer' }
         },
           e('span', { style: { color: colors.orange } }, 'Two'),
           e('span', { style: { color: colors.walnut } }, 'Pine')
         ),
-        isMobile
-          ? e('div', null,
-              e('button', {
-                onClick: () => setMenuOpen(!menuOpen),
-                style: { background: 'none', border: 'none', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }
+        e('div', { style: { display: 'flex', gap: '35px', fontSize: '11px', letterSpacing: '2px' } },
+          ['Technology', 'Music', 'Store', 'Contact'].map(item =>
+            e('a', {
+              key: item,
+              onClick: () => setCurrentPage(item.toLowerCase()),
+              style: {
+                color: currentPage === item.toLowerCase() ? colors.orange : colors.warmGray,
+                textDecoration: 'none', transition: 'color 0.3s', textTransform: 'uppercase',
+                fontWeight: currentPage === item.toLowerCase() ? '600' : '400',
               },
-                e('div', { style: { width: '20px', height: '2px', background: colors.walnut, transition: 'all 0.3s', transform: menuOpen ? 'rotate(45deg) translate(4px, 4px)' : 'none' } }),
-                e('div', { style: { width: '20px', height: '2px', background: colors.walnut, transition: 'all 0.3s', opacity: menuOpen ? 0 : 1 } }),
-                e('div', { style: { width: '20px', height: '2px', background: colors.walnut, transition: 'all 0.3s', transform: menuOpen ? 'rotate(-45deg) translate(4px, -4px)' : 'none' } })
-              ),
-              menuOpen && e('div', {
-                style: {
-                  position: 'absolute', top: '100%', left: 0, right: 0,
-                  background: 'rgba(253, 246, 227, 0.98)', backdropFilter: 'blur(10px)',
-                  padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px',
-                  borderBottom: '1px solid rgba(93, 64, 55, 0.1)',
-                }
-              },
-                ['Technology', 'Music', 'Store', 'Contact'].map(item =>
-                  e('a', {
-                    key: item,
-                    onClick: () => { setCurrentPage(item.toLowerCase()); setMenuOpen(false); },
-                    style: {
-                      color: currentPage === item.toLowerCase() ? colors.orange : colors.warmGray,
-                      textDecoration: 'none', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase',
-                      fontWeight: currentPage === item.toLowerCase() ? '600' : '400',
-                    }
-                  }, item)
-                )
-              )
-            )
-          : e('div', { style: { display: 'flex', gap: '35px', fontSize: '11px', letterSpacing: '2px' } },
-              ['Technology', 'Music', 'Store', 'Contact'].map(item =>
-                e('a', {
-                  key: item,
-                  onClick: () => setCurrentPage(item.toLowerCase()),
-                  style: {
-                    color: currentPage === item.toLowerCase() ? colors.orange : colors.warmGray,
-                    textDecoration: 'none', transition: 'color 0.3s', textTransform: 'uppercase',
-                    fontWeight: currentPage === item.toLowerCase() ? '600' : '400',
-                  },
-                  onMouseEnter: (evt) => evt.target.style.color = colors.orange,
-                  onMouseLeave: (evt) => { if (currentPage !== item.toLowerCase()) evt.target.style.color = colors.warmGray; }
-                }, item)
-              )
-            )
+              onMouseEnter: (evt) => evt.target.style.color = colors.orange,
+              onMouseLeave: (evt) => { if (currentPage !== item.toLowerCase()) evt.target.style.color = colors.warmGray; }
+            }, item)
+          )
+        )
       );
     };
 
     // Footer Component
-    const Footer = ({ isMobile }) => e('footer', {
+    const Footer = () => e('footer', {
       style: {
-        padding: isMobile ? '30px 20px' : '40px',
-        borderTop: '1px solid rgba(93, 64, 55, 0.1)',
+        padding: '40px', borderTop: '1px solid rgba(93, 64, 55, 0.1)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         flexWrap: 'wrap', gap: '20px', background: colors.cream,
-        flexDirection: isMobile ? 'column' : 'row',
       }
     },
       e('div', { style: { fontSize: '10px', letterSpacing: '2px', color: colors.warmGray } }, '© 2025 TWOPINE'),
-      e('div', { style: { display: 'flex', gap: isMobile ? '20px' : '25px', flexWrap: 'wrap', justifyContent: 'center' } },
+      e('div', { style: { display: 'flex', gap: '25px' } },
         [
           { name: 'Bandcamp', url: 'https://twopine.bandcamp.com' },
           { name: 'Spotify', url: 'https://open.spotify.com/artist/7tGYeWAQNzfxtSfbuM4iz9' },
@@ -179,14 +131,13 @@
     });
 
     // ============ HOME PAGE WITH SYNTH ============
-    const HomePage = ({ isMobile }) => {
+    const HomePage = () => {
       const [time, setTime] = useState(0);
       const [loaded, setLoaded] = useState(false);
       const [isMuted, setIsMuted] = useState(true);
       const [volume, setVolume] = useState(0.3);
       const [audioInitialized, setAudioInitialized] = useState(false);
       const [activeNotes, setActiveNotes] = useState(new Set());
-      const [showMobileStart, setShowMobileStart] = useState(isMobile); // Show tap to start on mobile
       
       const audioContextRef = useRef(null);
       const masterGainRef = useRef(null);
@@ -195,11 +146,6 @@
       const reverbInputRef = useRef(null);
       const limiterRef = useRef(null);
       const activeVoicesRef = useRef({});
-      
-      // Mobile touch tracking refs
-      const touchToNoteMapRef = useRef(new Map()); // Maps touch identifier -> note index
-      const keyboardContainerRef = useRef(null);
-      const noteElementsRef = useRef([]); // Refs to note pad elements for hit testing
       
       const MAX_VOICES = 8;
       const MAX_REVERB_FEEDBACK = 0.7;
@@ -214,7 +160,6 @@
       const [activeKnob, setActiveKnob] = useState(null);
       const [dragStart, setDragStart] = useState({ y: 0, value: 0 });
       const lastKnobClickRef = useRef({ name: null, time: 0 });
-      const knobTouchIdRef = useRef(null); // Track which touch is controlling the knob
 
       const notes = [
         { name: 'C', freq: 130.81, black: false },
@@ -306,22 +251,10 @@
       };
 
       const initAudio = useCallback(() => {
-        if (audioInitialized) {
-          // Always try to resume on mobile - iOS requires this after any pause
-          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-            audioContextRef.current.resume();
-          }
-          return;
-        }
+        if (audioInitialized) return;
         try {
           const ctx = new (window.AudioContext || window.webkitAudioContext)();
           audioContextRef.current = ctx;
-          
-          // iOS requires resume after creation
-          if (ctx.state === 'suspended') {
-            ctx.resume();
-          }
-          
           const masterGain = ctx.createGain();
           const dryGain = ctx.createGain();
           const reverbGain = ctx.createGain();
@@ -348,7 +281,6 @@
           reverbGainRef.current = reverbGain;
           reverbInputRef.current = reverb.input;
           setAudioInitialized(true);
-          setShowMobileStart(false); // Hide mobile start prompt
         } catch (err) {
           console.error('Web Audio init failed:', err);
         }
@@ -439,108 +371,6 @@
         setActiveNotes(prev => { const next = new Set(prev); next.delete(noteIndex); return next; });
       }, [audioInitialized]);
 
-      // Release all notes - cleanup function
-      const releaseAllNotes = useCallback(() => {
-        touchToNoteMapRef.current.forEach((noteIndex) => {
-          releaseNote(noteIndex);
-        });
-        touchToNoteMapRef.current.clear();
-      }, [releaseNote]);
-
-      // Helper: Find which note (if any) a touch point is over
-      const getNoteAtPoint = useCallback((x, y) => {
-        for (let i = 0; i < noteElementsRef.current.length; i++) {
-          const el = noteElementsRef.current[i];
-          if (el) {
-            const rect = el.getBoundingClientRect();
-            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-              return i;
-            }
-          }
-        }
-        return null;
-      }, []);
-
-      // MOBILE: Centralized touch handler for keyboard
-      const handleKeyboardTouchStart = useCallback((evt) => {
-        evt.preventDefault();
-        initAudio();
-        
-        for (let i = 0; i < evt.changedTouches.length; i++) {
-          const touch = evt.changedTouches[i];
-          const noteIndex = getNoteAtPoint(touch.clientX, touch.clientY);
-          if (noteIndex !== null && !touchToNoteMapRef.current.has(touch.identifier)) {
-            touchToNoteMapRef.current.set(touch.identifier, noteIndex);
-            triggerNote(noteIndex);
-          }
-        }
-      }, [initAudio, getNoteAtPoint, triggerNote]);
-
-      const handleKeyboardTouchMove = useCallback((evt) => {
-        evt.preventDefault();
-        
-        for (let i = 0; i < evt.changedTouches.length; i++) {
-          const touch = evt.changedTouches[i];
-          const currentNoteIndex = touchToNoteMapRef.current.get(touch.identifier);
-          const newNoteIndex = getNoteAtPoint(touch.clientX, touch.clientY);
-          
-          // If finger moved to a different note
-          if (currentNoteIndex !== undefined && newNoteIndex !== currentNoteIndex) {
-            // Release the old note
-            releaseNote(currentNoteIndex);
-            touchToNoteMapRef.current.delete(touch.identifier);
-            
-            // Trigger the new note if there is one
-            if (newNoteIndex !== null) {
-              touchToNoteMapRef.current.set(touch.identifier, newNoteIndex);
-              triggerNote(newNoteIndex);
-            }
-          } else if (currentNoteIndex === undefined && newNoteIndex !== null) {
-            // Touch moved onto a note from outside
-            touchToNoteMapRef.current.set(touch.identifier, newNoteIndex);
-            triggerNote(newNoteIndex);
-          }
-        }
-      }, [getNoteAtPoint, triggerNote, releaseNote]);
-
-      const handleKeyboardTouchEnd = useCallback((evt) => {
-        evt.preventDefault();
-        
-        for (let i = 0; i < evt.changedTouches.length; i++) {
-          const touch = evt.changedTouches[i];
-          const noteIndex = touchToNoteMapRef.current.get(touch.identifier);
-          if (noteIndex !== undefined) {
-            releaseNote(noteIndex);
-            touchToNoteMapRef.current.delete(touch.identifier);
-          }
-        }
-      }, [releaseNote]);
-
-      // Global touch end handler for safety - catches releases that happen outside keyboard
-      useEffect(() => {
-        if (!isMobile) return;
-        
-        const handleGlobalTouchEnd = (evt) => {
-          // Check if this touch was one of ours
-          for (let i = 0; i < evt.changedTouches.length; i++) {
-            const touch = evt.changedTouches[i];
-            const noteIndex = touchToNoteMapRef.current.get(touch.identifier);
-            if (noteIndex !== undefined) {
-              releaseNote(noteIndex);
-              touchToNoteMapRef.current.delete(touch.identifier);
-            }
-          }
-        };
-        
-        window.addEventListener('touchend', handleGlobalTouchEnd);
-        window.addEventListener('touchcancel', handleGlobalTouchEnd);
-        
-        return () => {
-          window.removeEventListener('touchend', handleGlobalTouchEnd);
-          window.removeEventListener('touchcancel', handleGlobalTouchEnd);
-        };
-      }, [isMobile, releaseNote]);
-
       useEffect(() => {
         if (!audioInitialized) return;
         const ctx = audioContextRef.current;
@@ -567,10 +397,8 @@
         return () => { if (audioContextRef.current) audioContextRef.current.close(); };
       }, []);
 
-      // ===== IMPROVED KNOB HANDLING FOR MOBILE =====
-      const handleKnobStart = useCallback((knobName, evt) => {
+      const handleKnobMouseDown = (knobName, evt) => {
         evt.preventDefault();
-        evt.stopPropagation();
         initAudio();
         
         const now = Date.now();
@@ -582,176 +410,52 @@
         }
         lastKnobClickRef.current = { name: knobName, time: now };
         
-        const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-        const touchId = evt.touches ? evt.touches[0].identifier : null;
-        
-        knobTouchIdRef.current = touchId;
         setActiveKnob(knobName);
-        setDragStart({ y: clientY, value: knobValues[knobName] });
-      }, [initAudio, knobValues]);
+        setDragStart({ y: evt.clientY, value: knobValues[knobName] });
+      };
 
-      const handleKnobMove = useCallback((evt) => {
-        if (!activeKnob) return;
-        evt.preventDefault();
-        
-        let clientY;
-        if (evt.touches) {
-          // Find the right touch by identifier
-          let touch = null;
-          for (let i = 0; i < evt.touches.length; i++) {
-            if (evt.touches[i].identifier === knobTouchIdRef.current) {
-              touch = evt.touches[i];
-              break;
-            }
-          }
-          if (!touch) return;
-          clientY = touch.clientY;
-        } else {
-          clientY = evt.clientY;
+      const handleMouseMove = useCallback((evt) => {
+        if (activeKnob) {
+          const delta = (dragStart.y - evt.clientY) / 150;
+          setKnobValues(prev => ({ ...prev, [activeKnob]: Math.max(0, Math.min(1, dragStart.value + delta)) }));
         }
-        
-        const delta = (dragStart.y - clientY) / (isMobile ? 80 : 150);
-        const newValue = Math.max(0, Math.min(1, dragStart.value + delta));
-        setKnobValues(prev => ({ ...prev, [activeKnob]: newValue }));
-      }, [activeKnob, dragStart, isMobile]);
+      }, [activeKnob, dragStart]);
 
-      const handleKnobEnd = useCallback((evt) => {
-        if (evt && evt.touches) {
-          // Check if our touch ended
-          let found = false;
-          for (let i = 0; i < evt.changedTouches.length; i++) {
-            if (evt.changedTouches[i].identifier === knobTouchIdRef.current) {
-              found = true;
-              break;
-            }
-          }
-          if (!found && evt.touches.length > 0) return; // Our touch is still active
-        }
-        knobTouchIdRef.current = null;
-        setActiveKnob(null);
-      }, []);
+      const handleMouseUp = useCallback(() => setActiveKnob(null), []);
 
       useEffect(() => {
         if (activeKnob) {
-          const handleMove = (evt) => handleKnobMove(evt);
-          const handleUp = (evt) => handleKnobEnd(evt);
-          
-          window.addEventListener('mousemove', handleMove);
-          window.addEventListener('mouseup', handleUp);
-          window.addEventListener('touchmove', handleMove, { passive: false });
-          window.addEventListener('touchend', handleUp);
-          window.addEventListener('touchcancel', handleUp);
-          
+          window.addEventListener('mousemove', handleMouseMove);
+          window.addEventListener('mouseup', handleMouseUp);
           return () => {
-            window.removeEventListener('mousemove', handleMove);
-            window.removeEventListener('mouseup', handleUp);
-            window.removeEventListener('touchmove', handleMove);
-            window.removeEventListener('touchend', handleUp);
-            window.removeEventListener('touchcancel', handleUp);
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
           };
         }
-      }, [activeKnob, handleKnobMove, handleKnobEnd]);
+      }, [activeKnob, handleMouseMove, handleMouseUp]);
 
-      // ===== IMPROVED VOLUME HANDLING FOR MOBILE =====
       const [volumeDragging, setVolumeDragging] = useState(false);
       const volumeBarRef = useRef(null);
-      const volumeTouchIdRef = useRef(null);
-      const lastVolumeUpdateRef = useRef(0);
 
-      const updateVolumeFromEvent = useCallback((evt) => {
-        if (!volumeBarRef.current) return;
-        
-        // Throttle updates to prevent erratic behavior
-        const now = Date.now();
-        if (now - lastVolumeUpdateRef.current < 16) return; // ~60fps max
-        lastVolumeUpdateRef.current = now;
-        
-        const rect = volumeBarRef.current.getBoundingClientRect();
-        
-        let clientX, clientY;
-        if (evt.touches) {
-          // Find our touch
-          let touch = null;
-          for (let i = 0; i < evt.touches.length; i++) {
-            if (volumeTouchIdRef.current === null || evt.touches[i].identifier === volumeTouchIdRef.current) {
-              touch = evt.touches[i];
-              break;
-            }
-          }
-          if (!touch && evt.changedTouches) {
-            touch = evt.changedTouches[0];
-          }
-          if (!touch) return;
-          clientX = touch.clientX;
-          clientY = touch.clientY;
-        } else {
-          clientX = evt.clientX;
-          clientY = evt.clientY;
+      const updateVolumeFromEvent = (evt) => {
+        if (volumeBarRef.current) {
+          const rect = volumeBarRef.current.getBoundingClientRect();
+          setVolume(Math.max(0, Math.min(1, 1 - (evt.clientY - rect.top) / rect.height)));
         }
-        
-        let newVolume;
-        if (isMobile) {
-          // Horizontal bar on mobile
-          newVolume = (clientX - rect.left) / rect.width;
-        } else {
-          // Vertical bar on desktop
-          newVolume = 1 - (clientY - rect.top) / rect.height;
-        }
-        
-        setVolume(Math.max(0, Math.min(1, newVolume)));
-      }, [isMobile]);
-
-      const handleVolumeStart = useCallback((evt) => {
-        evt.preventDefault();
-        evt.stopPropagation();
-        initAudio();
-        
-        if (evt.touches) {
-          volumeTouchIdRef.current = evt.touches[0].identifier;
-        }
-        setVolumeDragging(true);
-        updateVolumeFromEvent(evt);
-      }, [initAudio, updateVolumeFromEvent]);
-
-      const handleVolumeEnd = useCallback((evt) => {
-        if (evt && evt.touches && evt.touches.length > 0) {
-          // Check if our touch ended
-          let found = false;
-          for (let i = 0; i < evt.changedTouches.length; i++) {
-            if (evt.changedTouches[i].identifier === volumeTouchIdRef.current) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) return;
-        }
-        volumeTouchIdRef.current = null;
-        setVolumeDragging(false);
-      }, []);
+      };
 
       useEffect(() => {
         if (volumeDragging) {
-          const handleMove = (evt) => { 
-            evt.preventDefault(); 
-            updateVolumeFromEvent(evt); 
-          };
-          const handleUp = (evt) => handleVolumeEnd(evt);
-          
+          const handleMove = (evt) => updateVolumeFromEvent(evt);
+          const handleUp = () => setVolumeDragging(false);
           window.addEventListener('mousemove', handleMove);
           window.addEventListener('mouseup', handleUp);
-          window.addEventListener('touchmove', handleMove, { passive: false });
-          window.addEventListener('touchend', handleUp);
-          window.addEventListener('touchcancel', handleUp);
-          
           return () => {
             window.removeEventListener('mousemove', handleMove);
             window.removeEventListener('mouseup', handleUp);
-            window.removeEventListener('touchmove', handleMove);
-            window.removeEventListener('touchend', handleUp);
-            window.removeEventListener('touchcancel', handleUp);
           };
         }
-      }, [volumeDragging, updateVolumeFromEvent, handleVolumeEnd]);
+      }, [volumeDragging]);
 
       const generateWave = (offset, baseAmplitude) => {
         const points = [];
@@ -766,15 +470,13 @@
         return 'M ' + points.join(' L ');
       };
 
-      // Knob component with improved mobile handling
       const Knob = ({ name, label, color, size }) => {
-        const actualSize = size || (isMobile ? 44 : 50);
+        size = size || 50;
         return e('div', { style: { textAlign: 'center' } },
           e('div', {
-            onMouseDown: (evt) => handleKnobStart(name, evt),
-            onTouchStart: (evt) => handleKnobStart(name, evt),
+            onMouseDown: (evt) => handleKnobMouseDown(name, evt),
             style: {
-              width: actualSize + 'px', height: actualSize + 'px', borderRadius: '50%',
+              width: size + 'px', height: size + 'px', borderRadius: '50%',
               background: 'linear-gradient(145deg, #F5F0E6 0%, #DDD7CB 100%)',
               boxShadow: activeKnob === name
                 ? '0 4px 12px rgba(93, 64, 55, 0.3), 0 0 0 3px ' + color + '40'
@@ -782,46 +484,37 @@
               margin: '0 auto 6px', position: 'relative',
               transform: 'rotate(' + ((knobValues[name] * 270) - 135) + 'deg)',
               transition: activeKnob === name ? 'none' : 'transform 0.1s ease-out',
-              cursor: 'ns-resize', touchAction: 'none',
-              WebkitUserSelect: 'none', userSelect: 'none',
+              cursor: 'ns-resize',
             }
           },
             e('div', {
               style: {
-                position: 'absolute', top: (actualSize * 0.14) + 'px', left: '50%',
-                width: '3px', height: (actualSize * 0.22) + 'px',
+                position: 'absolute', top: (size * 0.14) + 'px', left: '50%',
+                width: '3px', height: (size * 0.22) + 'px',
                 background: color, transform: 'translateX(-50%)', borderRadius: '2px',
-                pointerEvents: 'none',
               }
             }),
             e('div', {
               style: {
                 position: 'absolute', top: '50%', left: '50%',
-                width: (actualSize * 0.34) + 'px', height: (actualSize * 0.34) + 'px',
+                width: (size * 0.34) + 'px', height: (size * 0.34) + 'px',
                 background: 'linear-gradient(145deg, ' + colors.walnut + ', ' + colors.darkBrown + ')',
                 borderRadius: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none',
               }
             })
           ),
-          e('div', { style: { fontSize: isMobile ? '8px' : '7px', letterSpacing: '1px', color: colors.warmGray, textTransform: 'uppercase', pointerEvents: 'none' } }, label)
+          e('div', { style: { fontSize: '7px', letterSpacing: '1px', color: colors.warmGray, textTransform: 'uppercase' } }, label)
         );
       };
 
-      // Note pad - simpler version since touch is handled at container level on mobile
       const NotePad = ({ note, index }) => {
         const isActive = activeNotes.has(index);
-        const padWidth = isMobile ? (note.black ? '26px' : '32px') : (note.black ? '36px' : '42px');
-        const padHeight = isMobile ? (note.black ? '44px' : '52px') : (note.black ? '50px' : '60px');
-        
         return e('button', {
-          ref: (el) => { noteElementsRef.current[index] = el; },
-          // Desktop mouse events
-          onMouseDown: () => { if (!isMobile) { initAudio(); triggerNote(index); } },
-          onMouseUp: () => { if (!isMobile) releaseNote(index); },
-          onMouseLeave: () => { if (!isMobile && isActive) releaseNote(index); },
-          // Mobile: touch events handled at container level
+          onMouseDown: () => { initAudio(); triggerNote(index); },
+          onMouseUp: () => releaseNote(index),
+          onMouseLeave: () => { if (isActive) releaseNote(index); },
           style: {
-            width: padWidth, height: padHeight,
+            width: note.black ? '36px' : '42px', height: note.black ? '50px' : '60px',
             borderRadius: '6px', border: 'none',
             background: isActive
               ? 'linear-gradient(145deg, ' + colors.orange + ' 0%, #c9693a 100%)'
@@ -835,193 +528,13 @@
                 : '0 4px 8px rgba(93, 64, 55, 0.2), inset 0 1px 0 rgba(255,255,255,0.8)',
             cursor: 'pointer', transition: 'all 0.08s ease-out',
             transform: isActive ? 'translateY(2px)' : 'translateY(0)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
-            padding: isMobile ? '4px' : '6px', touchAction: 'none',
-            WebkitUserSelect: 'none', userSelect: 'none',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '6px',
           }
         },
-          e('span', { style: { fontSize: isMobile ? '7px' : '8px', fontWeight: '600', color: isActive ? colors.cream : note.black ? colors.walnutLight : colors.warmGray, pointerEvents: 'none' } }, note.name)
+          e('span', { style: { fontSize: '8px', fontWeight: '600', color: isActive ? colors.cream : note.black ? colors.walnutLight : colors.warmGray } }, note.name)
         );
       };
 
-      // ============ MOBILE LAYOUT ============
-      if (isMobile) {
-        return e('section', {
-          style: {
-            minHeight: '100vh', display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'flex-start', padding: '70px 12px 30px',
-            userSelect: 'none', touchAction: 'pan-y', position: 'relative',
-          }
-        },
-          // Mobile audio start overlay
-          showMobileStart && e('div', {
-            onTouchStart: (evt) => { evt.preventDefault(); initAudio(); setIsMuted(false); },
-            onClick: () => { initAudio(); setIsMuted(false); },
-            style: {
-              position: 'absolute', inset: 0, zIndex: 100,
-              background: 'rgba(253, 246, 227, 0.95)', backdropFilter: 'blur(4px)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              padding: '40px', touchAction: 'manipulation',
-            }
-          },
-            e('div', { style: { 
-              width: '80px', height: '80px', borderRadius: '50%', marginBottom: '24px',
-              background: 'linear-gradient(135deg, ' + colors.orange + ' 0%, #c9693a 100%)',
-              boxShadow: '0 8px 24px rgba(224, 123, 60, 0.4)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }},
-              e('svg', { width: '36', height: '36', viewBox: '0 0 24 24', fill: colors.cream },
-                e('path', { d: 'M8 5v14l11-7z' })
-              )
-            ),
-            e('div', { style: { fontSize: '14px', letterSpacing: '3px', color: colors.walnut, marginBottom: '8px', textTransform: 'uppercase', fontWeight: '500' } }, 'TAP TO START'),
-            e('div', { style: { fontSize: '11px', color: colors.warmGray, letterSpacing: '1px' } }, 'Enable audio to play')
-          ),
-          // Mobile Synth
-          e('div', {
-            style: {
-              opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)',
-              transition: 'all 0.6s ease-out', width: '100%', maxWidth: '400px',
-            }
-          },
-            // Main device
-            e('div', {
-              style: {
-                width: '100%',
-                background: 'linear-gradient(180deg, ' + colors.walnut + ' 0%, ' + colors.darkBrown + ' 100%)',
-                borderRadius: '12px', padding: '8px',
-                boxShadow: '0 20px 40px -15px rgba(61, 46, 36, 0.4)',
-              }
-            },
-              // Wood panel with display
-              e('div', {
-                style: {
-                  background: 'linear-gradient(90deg, ' + colors.walnutLight + ' 0%, #9C8B75 25%, ' + colors.walnutLight + ' 50%, #7D6B55 75%, ' + colors.walnutLight + ' 100%)',
-                  borderRadius: '8px 8px 0 0', padding: '12px 12px 10px',
-                }
-              },
-                e('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: '8px' } },
-                  e('div', { style: { fontSize: '9px', letterSpacing: '3px', color: colors.darkBrown, textTransform: 'uppercase', fontWeight: '600' } }, 'TwoPine')
-                ),
-                e('div', { style: { background: '#1a1a18', borderRadius: '5px', padding: '8px', boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.5)' } },
-                  e('svg', { width: '100%', height: '40', viewBox: '0 0 300 80', preserveAspectRatio: 'none' },
-                    [...Array(5)].map((_, i) => e('line', { key: 'h' + i, x1: '0', y1: i * 20, x2: '300', y2: i * 20, stroke: colors.teal, strokeWidth: '0.5', opacity: '0.2' })),
-                    [...Array(15)].map((_, i) => e('line', { key: 'v' + i, x1: i * 20, y1: '0', x2: i * 20, y2: '80', stroke: colors.teal, strokeWidth: '0.5', opacity: '0.2' })),
-                    e('path', { d: generateWave(0, 15), fill: 'none', stroke: colors.orange, strokeWidth: '1.5', opacity: '0.4' }),
-                    e('path', { d: generateWave(1.5, 20), fill: 'none', stroke: colors.mustard, strokeWidth: '2', style: { filter: 'drop-shadow(0 0 6px ' + colors.mustard + ')' } })
-                  )
-                )
-              ),
-              // Control panel
-              e('div', { style: { background: 'linear-gradient(180deg, ' + colors.warmWhite + ' 0%, #E8E2D6 100%)', borderRadius: '0 0 8px 8px', padding: '12px' } },
-                // Volume and Mute row
-                e('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', padding: '10px 12px', background: colors.darkBrown, borderRadius: '6px' } },
-                  e('button', {
-                    onTouchStart: (evt) => { evt.preventDefault(); evt.stopPropagation(); initAudio(); setIsMuted(!isMuted); },
-                    onClick: (evt) => { evt.preventDefault(); initAudio(); setIsMuted(!isMuted); },
-                    style: {
-                      width: '48px', height: '48px', borderRadius: '50%', border: 'none', flexShrink: 0,
-                      background: isMuted ? colors.warmWhite : 'linear-gradient(135deg, ' + colors.orange + ' 0%, #c9693a 100%)',
-                      boxShadow: isMuted ? 'inset 0 2px 4px rgba(0,0,0,0.1)' : '0 4px 12px rgba(224, 123, 60, 0.5)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent',
-                    }
-                  },
-                    e('svg', { width: '22', height: '22', viewBox: '0 0 24 24', fill: 'none', stroke: isMuted ? colors.warmGray : colors.cream, strokeWidth: '2', style: { pointerEvents: 'none' } },
-                      e('path', { d: 'M11 5L6 9H2v6h4l5 4V5z' }),
-                      isMuted
-                        ? [e('line', { key: 'l1', x1: '23', y1: '9', x2: '17', y2: '15' }), e('line', { key: 'l2', x1: '17', y1: '9', x2: '23', y2: '15' })]
-                        : [e('path', { key: 'p1', d: 'M15.54 8.46a5 5 0 0 1 0 7.07' }), e('path', { key: 'p2', d: 'M19.07 4.93a10 10 0 0 1 0 14.14' })]
-                    )
-                  ),
-                  // Horizontal volume bar for mobile - improved touch handling
-                  e('div', {
-                    ref: volumeBarRef,
-                    onMouseDown: handleVolumeStart,
-                    onTouchStart: handleVolumeStart,
-                    style: { flex: 1, height: '16px', background: colors.darkBrown, borderRadius: '8px', position: 'relative', cursor: 'pointer', touchAction: 'none', border: '1px solid rgba(255,255,255,0.1)' }
-                  },
-                    e('div', { style: { position: 'absolute', top: 0, left: 0, bottom: 0, width: (volume * 100) + '%', background: 'linear-gradient(to right, ' + colors.teal + ', ' + colors.mustard + ')', borderRadius: '8px', transition: volumeDragging ? 'none' : 'width 0.1s', pointerEvents: 'none' } }),
-                    e('div', { style: { position: 'absolute', top: '50%', left: 'calc(' + (volume * 100) + '% - 10px)', transform: 'translateY(-50%)', width: '20px', height: '20px', background: colors.warmWhite, borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', transition: volumeDragging ? 'none' : 'left 0.1s', pointerEvents: 'none' } })
-                  ),
-                  e('div', { style: { fontSize: '8px', letterSpacing: '1px', color: colors.walnutLight, flexShrink: 0 } }, 'VOL')
-                ),
-                // Controls in 2x2 grid
-                e('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' } },
-                  // OSC 1
-                  e('div', { style: { background: 'rgba(93, 64, 55, 0.05)', borderRadius: '6px', padding: '10px 8px' } },
-                    e('div', { style: { fontSize: '7px', letterSpacing: '2px', color: colors.orange, marginBottom: '8px', textAlign: 'center' } }, 'OSC 1'),
-                    e('div', { style: { display: 'flex', justifyContent: 'center', gap: '12px' } },
-                      e(Knob, { name: 'osc1Freq', label: 'TUNE', color: colors.orange, size: 36 }),
-                      e(Knob, { name: 'osc1Mix', label: 'MIX', color: colors.orange, size: 36 })
-                    )
-                  ),
-                  // OSC 2
-                  e('div', { style: { background: 'rgba(93, 64, 55, 0.05)', borderRadius: '6px', padding: '10px 8px' } },
-                    e('div', { style: { fontSize: '7px', letterSpacing: '2px', color: colors.teal, marginBottom: '8px', textAlign: 'center' } }, 'OSC 2'),
-                    e('div', { style: { display: 'flex', justifyContent: 'center', gap: '12px' } },
-                      e(Knob, { name: 'osc2Freq', label: 'TUNE', color: colors.teal, size: 36 }),
-                      e(Knob, { name: 'osc2Mix', label: 'MIX', color: colors.teal, size: 36 })
-                    )
-                  ),
-                  // Filter
-                  e('div', { style: { background: 'rgba(93, 64, 55, 0.05)', borderRadius: '6px', padding: '10px 8px' } },
-                    e('div', { style: { fontSize: '7px', letterSpacing: '2px', color: colors.mustard, marginBottom: '8px', textAlign: 'center' } }, 'FILTER'),
-                    e('div', { style: { display: 'flex', justifyContent: 'center', gap: '12px' } },
-                      e(Knob, { name: 'filterCutoff', label: 'CUT', color: colors.mustard, size: 36 }),
-                      e(Knob, { name: 'filterRes', label: 'RES', color: colors.mustard, size: 36 })
-                    )
-                  ),
-                  // FX
-                  e('div', { style: { background: 'rgba(93, 64, 55, 0.05)', borderRadius: '6px', padding: '10px 8px' } },
-                    e('div', { style: { fontSize: '7px', letterSpacing: '2px', color: colors.walnut, marginBottom: '8px', textAlign: 'center' } }, 'FX'),
-                    e('div', { style: { display: 'flex', justifyContent: 'center', gap: '12px' } },
-                      e(Knob, { name: 'reverb', label: 'REVERB', color: colors.teal, size: 36 }),
-                      e(Knob, { name: 'amplitude', label: 'AMP', color: colors.orange, size: 36 })
-                    )
-                  )
-                ),
-                // ADSR row
-                e('div', { style: { background: 'rgba(93, 64, 55, 0.05)', borderRadius: '6px', padding: '10px 8px', marginBottom: '10px' } },
-                  e('div', { style: { fontSize: '7px', letterSpacing: '2px', color: colors.walnut, marginBottom: '8px', textAlign: 'center' } }, 'ENVELOPE'),
-                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '16px' } },
-                    e(Knob, { name: 'attack', label: 'A', color: colors.walnut, size: 32 }),
-                    e(Knob, { name: 'decay', label: 'D', color: colors.walnut, size: 32 }),
-                    e(Knob, { name: 'sustain', label: 'S', color: colors.walnut, size: 32 }),
-                    e(Knob, { name: 'release', label: 'R', color: colors.walnut, size: 32 })
-                  )
-                ),
-                // Note Pads - with container-level touch handling
-                e('div', { 
-                  ref: keyboardContainerRef,
-                  onTouchStart: handleKeyboardTouchStart,
-                  onTouchMove: handleKeyboardTouchMove,
-                  onTouchEnd: handleKeyboardTouchEnd,
-                  onTouchCancel: handleKeyboardTouchEnd,
-                  style: { background: colors.darkBrown, borderRadius: '6px', padding: '10px', marginBottom: '8px', touchAction: 'none' } 
-                },
-                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '4px', flexWrap: 'nowrap' } },
-                    notes.map((note, i) => e(NotePad, { key: i, note: note, index: i }))
-                  )
-                ),
-                // Help text
-                e('div', { style: { textAlign: 'center', fontSize: '7px', color: colors.warmGray, opacity: 0.6, letterSpacing: '0.5px' } },
-                  isMuted ? '🔇 TAP TO UNMUTE' : '🔊 TAP KEYS TO PLAY • DRAG KNOBS'
-                )
-              )
-            )
-          ),
-          // Brand
-          e('div', { style: { marginTop: '24px', textAlign: 'center', opacity: loaded ? 1 : 0, transition: 'opacity 0.8s ease-out 0.4s' } },
-            e('h1', { style: { fontSize: '24px', fontWeight: '400', letterSpacing: '6px', textTransform: 'uppercase' } },
-              e('span', { style: { color: colors.orange } }, 'Two'),
-              e('span', { style: { color: colors.walnut } }, 'Pine')
-            )
-          )
-        );
-      }
-
-      // ============ DESKTOP LAYOUT (unchanged) ============
       return e('section', {
         style: {
           minHeight: '100vh', display: 'flex', flexDirection: 'column',
@@ -1083,123 +596,158 @@
             ),
             e('div', { style: { fontSize: '7px', letterSpacing: '1px', color: colors.walnutLight } }, 'VOL')
           ),
-          // Main Synth
+          // Main device
           e('div', {
             style: {
-              width: '550px',
+              width: '680px', maxWidth: '85vw',
               background: 'linear-gradient(180deg, ' + colors.walnut + ' 0%, ' + colors.darkBrown + ' 100%)',
-              borderRadius: '16px', padding: '12px',
-              boxShadow: '0 25px 50px -15px rgba(61, 46, 36, 0.5)',
+              borderRadius: '14px', padding: '10px',
+              boxShadow: '0 30px 60px -20px rgba(61, 46, 36, 0.4), 0 50px 100px -30px rgba(61, 46, 36, 0.3)',
             }
           },
             // Wood panel
             e('div', {
               style: {
-                background: 'linear-gradient(90deg, ' + colors.walnutLight + ' 0%, #9C8B75 15%, ' + colors.walnutLight + ' 35%, #7D6B55 65%, ' + colors.walnutLight + ' 85%, #9C8B75 100%)',
-                borderRadius: '10px 10px 0 0', padding: '16px 20px',
+                background: 'linear-gradient(90deg, ' + colors.walnutLight + ' 0%, #9C8B75 20%, ' + colors.walnutLight + ' 40%, #7D6B55 60%, ' + colors.walnutLight + ' 80%, #9C8B75 100%)',
+                borderRadius: '10px 10px 0 0', padding: '16px 20px 12px', position: 'relative',
               }
             },
-              e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' } },
-                e('div', { style: { fontSize: '10px', letterSpacing: '4px', color: colors.darkBrown, textTransform: 'uppercase', fontWeight: '600' } }, 'TwoPine'),
-                e('div', { style: { fontSize: '8px', letterSpacing: '2px', color: colors.walnut } }, 'MODEL 1')
+              e('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: '12px' } },
+                e('div', { style: { fontSize: '10px', letterSpacing: '4px', color: colors.darkBrown, textTransform: 'uppercase', fontWeight: '600' } }, 'TwoPine')
               ),
-              // Display
-              e('div', { style: { background: '#1a1a18', borderRadius: '8px', padding: '12px', boxShadow: 'inset 0 3px 8px rgba(0,0,0,0.6)' } },
+              e('div', { style: { background: '#1a1a18', borderRadius: '6px', padding: '10px', boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)' } },
                 e('svg', { width: '100%', height: '60', viewBox: '0 0 300 80', preserveAspectRatio: 'none' },
-                  [...Array(5)].map((_, i) => e('line', { key: 'h' + i, x1: '0', y1: i * 20, x2: '300', y2: i * 20, stroke: colors.teal, strokeWidth: '0.5', opacity: '0.3' })),
-                  [...Array(15)].map((_, i) => e('line', { key: 'v' + i, x1: i * 20, y1: '0', x2: i * 20, y2: '80', stroke: colors.teal, strokeWidth: '0.5', opacity: '0.3' })),
-                  e('path', { d: generateWave(0, 15), fill: 'none', stroke: colors.orange, strokeWidth: '1.5', opacity: '0.5' }),
-                  e('path', { d: generateWave(1.5, 20), fill: 'none', stroke: colors.mustard, strokeWidth: '2', style: { filter: 'drop-shadow(0 0 8px ' + colors.mustard + ')' } })
+                  [...Array(5)].map((_, i) => e('line', { key: 'h' + i, x1: '0', y1: i * 20, x2: '300', y2: i * 20, stroke: colors.teal, strokeWidth: '0.5', opacity: '0.2' })),
+                  [...Array(15)].map((_, i) => e('line', { key: 'v' + i, x1: i * 20, y1: '0', x2: i * 20, y2: '80', stroke: colors.teal, strokeWidth: '0.5', opacity: '0.2' })),
+                  e('path', { d: generateWave(0, 15), fill: 'none', stroke: colors.orange, strokeWidth: '1.5', opacity: '0.4' }),
+                  e('path', { d: generateWave(1.5, 20), fill: 'none', stroke: colors.mustard, strokeWidth: '2', style: { filter: 'drop-shadow(0 0 6px ' + colors.mustard + ')' } })
                 )
               )
             ),
             // Control panel
-            e('div', { style: { background: 'linear-gradient(180deg, ' + colors.warmWhite + ' 0%, #E8E2D6 100%)', borderRadius: '0 0 10px 10px', padding: '20px' } },
-              // Knob rows
-              e('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '16px', marginBottom: '20px' } },
-                e('div', { style: { gridColumn: 'span 2', background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '14px 10px' } },
+            e('div', { style: { background: 'linear-gradient(180deg, ' + colors.warmWhite + ' 0%, #E8E2D6 100%)', borderRadius: '0 0 10px 10px', padding: '16px 20px' } },
+              // Controls
+              e('div', { style: { display: 'flex', gap: '12px', marginBottom: '16px' } },
+                // OSC 1
+                e('div', { style: { flex: 1, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '12px' } },
                   e('div', { style: { fontSize: '8px', letterSpacing: '2px', color: colors.orange, marginBottom: '10px', textAlign: 'center' } }, 'OSC 1'),
-                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '20px' } },
-                    e(Knob, { name: 'osc1Freq', label: 'TUNE', color: colors.orange }),
-                    e(Knob, { name: 'osc1Mix', label: 'MIX', color: colors.orange })
+                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '8px' } },
+                    e(Knob, { name: 'osc1Freq', label: 'TUNE', color: colors.orange, size: 38 }),
+                    e(Knob, { name: 'osc1Mix', label: 'MIX', color: colors.orange, size: 38 })
                   )
                 ),
-                e('div', { style: { gridColumn: 'span 2', background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '14px 10px' } },
+                // OSC 2
+                e('div', { style: { flex: 1, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '12px' } },
                   e('div', { style: { fontSize: '8px', letterSpacing: '2px', color: colors.teal, marginBottom: '10px', textAlign: 'center' } }, 'OSC 2'),
-                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '20px' } },
-                    e(Knob, { name: 'osc2Freq', label: 'TUNE', color: colors.teal }),
-                    e(Knob, { name: 'osc2Mix', label: 'MIX', color: colors.teal })
+                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '8px' } },
+                    e(Knob, { name: 'osc2Freq', label: 'TUNE', color: colors.teal, size: 38 }),
+                    e(Knob, { name: 'osc2Mix', label: 'MIX', color: colors.teal, size: 38 })
                   )
                 ),
-                e('div', { style: { gridColumn: 'span 2', background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '14px 10px' } },
+                // Filter
+                e('div', { style: { flex: 1, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '12px' } },
                   e('div', { style: { fontSize: '8px', letterSpacing: '2px', color: colors.mustard, marginBottom: '10px', textAlign: 'center' } }, 'FILTER'),
-                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '20px' } },
-                    e(Knob, { name: 'filterCutoff', label: 'CUTOFF', color: colors.mustard }),
-                    e(Knob, { name: 'filterRes', label: 'RES', color: colors.mustard })
+                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '8px' } },
+                    e(Knob, { name: 'filterCutoff', label: 'CUT', color: colors.mustard, size: 38 }),
+                    e(Knob, { name: 'filterRes', label: 'RES', color: colors.mustard, size: 38 })
+                  )
+                ),
+                // ADSR
+                e('div', { style: { flex: 1.5, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '12px' } },
+                  e('div', { style: { fontSize: '8px', letterSpacing: '2px', color: colors.walnut, marginBottom: '10px', textAlign: 'center' } }, 'ENVELOPE'),
+                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '6px' } },
+                    e(Knob, { name: 'attack', label: 'A', color: colors.walnut, size: 34 }),
+                    e(Knob, { name: 'decay', label: 'D', color: colors.walnut, size: 34 }),
+                    e(Knob, { name: 'sustain', label: 'S', color: colors.walnut, size: 34 }),
+                    e(Knob, { name: 'release', label: 'R', color: colors.walnut, size: 34 })
                   )
                 )
               ),
-              e('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px' } },
-                e('div', { style: { display: 'flex', gap: '20px', background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '14px 16px' } },
-                  e(Knob, { name: 'reverb', label: 'REVERB', color: colors.teal }),
-                  e(Knob, { name: 'amplitude', label: 'AMP', color: colors.orange })
-                ),
-                e('div', { style: { display: 'flex', gap: '12px', background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '14px 16px' } },
-                  e(Knob, { name: 'attack', label: 'ATTACK', color: colors.walnut, size: 42 }),
-                  e(Knob, { name: 'decay', label: 'DECAY', color: colors.walnut, size: 42 }),
-                  e(Knob, { name: 'sustain', label: 'SUSTAIN', color: colors.walnut, size: 42 }),
-                  e(Knob, { name: 'release', label: 'RELEASE', color: colors.walnut, size: 42 })
-                )
-              ),
-              // Keys
-              e('div', { style: { background: colors.darkBrown, borderRadius: '8px', padding: '14px' } },
+              // Note Pads
+              e('div', { style: { background: colors.darkBrown, borderRadius: '8px', padding: '14px 16px', marginBottom: '14px' } },
                 e('div', { style: { display: 'flex', justifyContent: 'center', gap: '6px' } },
                   notes.map((note, i) => e(NotePad, { key: i, note: note, index: i }))
                 )
               ),
-              // Bottom info
-              e('div', { style: { marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-                e('div', { style: { fontSize: '8px', color: colors.warmGray, letterSpacing: '1px' } },
-                  isMuted ? '🔇 SOUND OFF — CLICK TO ENABLE' : '🔊 CLICK KEYS OR USE KEYBOARD A-L'
+              // Bottom
+              e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                e('div', { style: { display: 'flex', gap: '10px', alignItems: 'flex-end' } },
+                  e(Knob, { name: 'reverb', label: 'REVERB', color: colors.teal, size: 36 }),
+                  e(Knob, { name: 'amplitude', label: 'AMP', color: colors.orange, size: 36 })
                 ),
-                e('div', { style: { fontSize: '8px', color: colors.warmGray, letterSpacing: '1px' } }, 'DOUBLE-CLICK KNOB TO RESET')
+                e('div', { style: { display: 'flex', gap: '5px', padding: '8px 12px', background: colors.darkBrown, borderRadius: '5px' } },
+                  [0.4, 0.7, 0.9, 0.6, 0.8, 0.5].map((level, i) => {
+                    const hasNotes = activeNotes.size > 0;
+                    const animatedLevel = hasNotes ? (level + Math.sin(time * 3 + i * 0.5) * 0.2) * knobValues.amplitude : 0.15;
+                    return e('div', { key: i, style: { display: 'flex', flexDirection: 'column-reverse', gap: '2px' } },
+                      [...Array(5)].map((_, j) => {
+                        const isLit = j / 5 < animatedLevel;
+                        const segmentColor = j >= 4 ? colors.orange : j >= 2 ? colors.mustard : colors.teal;
+                        return e('div', { key: j, style: { width: '8px', height: '4px', borderRadius: '1px', background: isLit ? segmentColor : 'rgba(255,255,255,0.1)', boxShadow: isLit ? '0 0 4px ' + segmentColor : 'none', transition: 'all 0.08s' } });
+                      })
+                    );
+                  })
+                )
+              ),
+              e('div', { style: { textAlign: 'center', marginTop: '10px', fontSize: '7px', color: colors.warmGray, opacity: 0.5, letterSpacing: '1px' } },
+                isMuted ? '🔇 UNMUTE TO PLAY' : '🔊 CLICK PADS TO PLAY', ' • DRAG KNOBS TO ADJUST'
               )
             )
           )
         ),
-        // Brand below synth
-        e('div', { style: { marginTop: '50px', textAlign: 'center', opacity: loaded ? 1 : 0, transition: 'opacity 1s ease-out 0.6s' } },
-          e('h1', { style: { fontSize: '36px', fontWeight: '300', letterSpacing: '12px', textTransform: 'uppercase' } },
+        // Brand
+        e('div', { style: { marginTop: '40px', textAlign: 'center', opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out 0.8s' } },
+          e('h1', { style: { fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: '400', letterSpacing: '10px', textTransform: 'uppercase' } },
             e('span', { style: { color: colors.orange } }, 'Two'),
             e('span', { style: { color: colors.walnut } }, 'Pine')
-          ),
-          e('div', { style: { marginTop: '12px', fontSize: '11px', letterSpacing: '5px', color: colors.warmGray, textTransform: 'uppercase' } }, 'Sound · Software · Hardware')
+          )
         )
       );
     };
 
     // ============ TECHNOLOGY PAGE ============
-    const TechnologyPage = ({ isMobile }) => {
+    const TechnologyPage = () => {
       const [loaded, setLoaded] = useState(false);
       useEffect(() => { setLoaded(true); }, []);
 
-      return e('section', { style: { minHeight: '100vh', padding: isMobile ? '80px 20px 60px' : '140px 40px 80px', maxWidth: '1000px', margin: '0 auto' } },
+      const products = [
+        { name: 'Layers', status: 'AVAILABLE NOW', description: 'A 10 track looper IOS app designed with ambient musicians in mind.', specs: ['10 Tracks', 'iOS', 'Ambient Focused', 'Loop Control'], link: '#' },
+        { name: 'Pulse Control -1', status: 'AVAILABLE NOW', description: "An open source midi controller and desktop interface designed to control sound with the beat of one's heart.", specs: ['Open Source', 'MIDI Controller', 'Desktop Interface', 'Biometric Input'], link: '#' },
+        { name: 'TwoPine Web Synth', status: 'AVAILABLE NOW', description: 'The synthesizer you just played. A fully functional dual-oscillator instrument running entirely in your browser.', specs: ['Web Audio API', 'ADSR Envelope', 'Reverb FX', 'Touch Ready'], link: '#' },
+      ];
+
+      return e('section', { style: { minHeight: '100vh', padding: '140px 40px 80px', maxWidth: '1000px', margin: '0 auto' } },
         e('div', { style: { opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out' } },
-          e('h1', { style: { fontSize: isMobile ? '24px' : '32px', fontWeight: '400', letterSpacing: isMobile ? '4px' : '8px', marginBottom: '20px', color: colors.walnut } }, 'TECHNOLOGY'),
-          e('p', { style: { fontSize: isMobile ? '13px' : '14px', color: colors.warmGray, lineHeight: '1.8', maxWidth: '600px', marginBottom: isMobile ? '40px' : '60px' } }, 'A catalog of audio tools, sample libraries, and software instruments crafted for modern production.'),
-          e('div', { style: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '30px' } },
-            [
-              { title: 'Tape Emulation Suite', desc: 'Warm analog character with authentic tape saturation and flutter', status: 'COMING SOON', color: colors.orange },
-              { title: 'Grain Lab', desc: 'Granular processing toolkit for texture design', status: 'IN DEVELOPMENT', color: colors.teal },
-              { title: 'Field Recordings Vol.1', desc: 'Pacific Northwest ambient sounds and textures', status: 'AVAILABLE', color: colors.mustard },
-              { title: 'Synthesis Toolkit', desc: 'Modular components for building custom instruments', status: 'BETA', color: colors.walnut },
-            ].map((item, i) =>
-              e('div', { key: i, style: { background: colors.warmWhite, borderRadius: '12px', padding: '24px', border: '1px solid rgba(93, 64, 55, 0.1)' } },
-                e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' } },
-                  e('h3', { style: { fontSize: '14px', fontWeight: '500', color: colors.darkBrown } }, item.title),
-                  e('span', { style: { fontSize: '8px', letterSpacing: '1px', background: item.color + '20', color: item.color, padding: '4px 8px', borderRadius: '4px' } }, item.status)
+          e('h1', { style: { fontSize: '32px', fontWeight: '400', letterSpacing: '8px', marginBottom: '20px', color: colors.walnut } }, 'TECHNOLOGY'),
+          e('p', { style: { fontSize: '14px', color: colors.warmGray, lineHeight: '1.8', maxWidth: '600px', marginBottom: '60px' } }, 'We design instruments that bridge the gap between vintage analog character and modern workflow integration. Every product is built to inspire.'),
+          e('div', { style: { display: 'flex', flexDirection: 'column', gap: '40px' } },
+            products.map((product, i) =>
+              e('div', {
+                key: i,
+                style: {
+                  background: colors.warmWhite, borderRadius: '16px', padding: '40px',
+                  border: '1px solid rgba(93, 64, 55, 0.1)',
+                  opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)',
+                  transition: 'all 0.8s ease-out ' + (0.2 + i * 0.1) + 's',
+                }
+              },
+                e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' } },
+                  e('h2', { style: { fontSize: '20px', fontWeight: '500', letterSpacing: '3px', color: colors.darkBrown } }, product.name),
+                  product.link
+                    ? e('a', {
+                        href: product.link,
+                        style: { fontSize: '9px', letterSpacing: '2px', padding: '6px 12px', borderRadius: '20px', background: colors.teal, color: colors.cream, textDecoration: 'none', transition: 'all 0.3s', cursor: 'pointer' },
+                        onMouseEnter: (evt) => evt.target.style.background = colors.orange,
+                        onMouseLeave: (evt) => evt.target.style.background = colors.teal,
+                      }, product.status)
+                    : e('span', { style: { fontSize: '9px', letterSpacing: '2px', padding: '6px 12px', borderRadius: '20px', background: product.status === 'AVAILABLE NOW' ? colors.teal : colors.orange, color: colors.cream } }, product.status)
                 ),
-                e('p', { style: { fontSize: '12px', color: colors.warmGray, lineHeight: '1.6' } }, item.desc)
+                e('p', { style: { fontSize: '14px', color: colors.warmGray, lineHeight: '1.8', marginBottom: '25px' } }, product.description),
+                e('div', { style: { display: 'flex', gap: '12px', flexWrap: 'wrap' } },
+                  product.specs.map((spec, j) =>
+                    e('span', { key: j, style: { fontSize: '10px', letterSpacing: '1px', padding: '8px 14px', borderRadius: '6px', background: 'rgba(93, 64, 55, 0.08)', color: colors.walnut } }, spec)
+                  )
+                )
               )
             )
           )
@@ -1208,54 +756,41 @@
     };
 
     // ============ MUSIC PAGE ============
-    const MusicPage = ({ isMobile }) => {
+    const MusicPage = () => {
       const [loaded, setLoaded] = useState(false);
       useEffect(() => { setLoaded(true); }, []);
 
-      return e('section', { style: { minHeight: '100vh', padding: isMobile ? '80px 20px 60px' : '140px 40px 80px', maxWidth: '1000px', margin: '0 auto' } },
+      return e('section', { style: { minHeight: '100vh', padding: '140px 40px 80px', maxWidth: '1000px', margin: '0 auto' } },
         e('div', { style: { opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out' } },
-          e('h1', { style: { fontSize: isMobile ? '24px' : '32px', fontWeight: '400', letterSpacing: isMobile ? '4px' : '8px', marginBottom: '20px', color: colors.walnut } }, 'MUSIC'),
-          e('p', { style: { fontSize: isMobile ? '13px' : '14px', color: colors.warmGray, lineHeight: '1.8', maxWidth: '600px', marginBottom: isMobile ? '40px' : '60px' } }, 'Original compositions exploring ambient, electronic, and experimental territories.'),
-          e('div', { style: { display: 'flex', flexDirection: 'column', gap: '20px' } },
-            [
-              { title: 'Cascade', year: '2024', type: 'LP' },
-              { title: 'Morning Signals', year: '2024', type: 'EP' },
-              { title: 'Static Dreams', year: '2023', type: 'LP' },
-            ].map((album, i) =>
-              e('a', {
-                key: i, href: 'https://twopine.bandcamp.com', target: '_blank', rel: 'noopener noreferrer',
-                style: {
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: isMobile ? '16px 20px' : '20px 24px', background: colors.warmWhite,
-                  borderRadius: '10px', border: '1px solid rgba(93, 64, 55, 0.1)',
-                  textDecoration: 'none', transition: 'all 0.3s',
-                },
-                onMouseEnter: (evt) => { evt.currentTarget.style.borderColor = colors.orange; evt.currentTarget.style.transform = 'translateX(4px)'; },
-                onMouseLeave: (evt) => { evt.currentTarget.style.borderColor = 'rgba(93, 64, 55, 0.1)'; evt.currentTarget.style.transform = 'translateX(0)'; },
-              },
-                e('div', null,
-                  e('h3', { style: { fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: colors.darkBrown, marginBottom: '4px' } }, album.title),
-                  e('span', { style: { fontSize: '11px', color: colors.warmGray } }, album.year + ' · ' + album.type)
-                ),
-                e('div', { style: { fontSize: '18px', color: colors.orange } }, '→')
-              )
-            )
+          e('h1', { style: { fontSize: '32px', fontWeight: '400', letterSpacing: '8px', marginBottom: '60px', color: colors.walnut } }, 'MUSIC'),
+          e('div', { style: { background: colors.warmWhite, borderRadius: '16px', padding: '60px 40px', border: '1px solid rgba(93, 64, 55, 0.1)', textAlign: 'center', marginBottom: '40px' } },
+            e('div', { style: { fontSize: '11px', letterSpacing: '3px', color: colors.orange, marginBottom: '20px' } }, 'LISTEN NOW'),
+            e('h2', { style: { fontSize: '24px', fontWeight: '400', letterSpacing: '4px', color: colors.darkBrown, marginBottom: '30px' } }, 'TwoPine on Bandcamp'),
+            e('a', {
+              href: 'https://twopine.bandcamp.com', target: '_blank', rel: 'noopener noreferrer',
+              style: { display: 'inline-block', padding: '14px 32px', background: colors.walnut, color: colors.cream, textDecoration: 'none', borderRadius: '8px', fontSize: '11px', letterSpacing: '2px', transition: 'all 0.3s' },
+              onMouseEnter: (evt) => evt.target.style.background = colors.orange,
+              onMouseLeave: (evt) => evt.target.style.background = colors.walnut,
+            }, 'EXPLORE RELEASES')
           ),
-          e('div', { style: { marginTop: isMobile ? '40px' : '60px', padding: isMobile ? '20px' : '30px', background: colors.warmWhite, borderRadius: '12px', border: '1px solid rgba(93, 64, 55, 0.1)' } },
-            e('div', { style: { fontSize: '10px', letterSpacing: '2px', color: colors.teal, marginBottom: '15px' } }, 'LISTEN'),
-            e('div', { style: { display: 'flex', gap: '20px', flexWrap: 'wrap' } },
-              [
-                { name: 'Bandcamp', url: 'https://twopine.bandcamp.com' },
-                { name: 'Spotify', url: 'https://open.spotify.com/artist/7tGYeWAQNzfxtSfbuM4iz9' },
-                { name: 'Apple Music', url: 'https://music.apple.com/us/artist/twopine/1706752446' },
-              ].map((platform, i) =>
-                e('a', {
-                  key: i, href: platform.url, target: '_blank', rel: 'noopener noreferrer',
-                  style: { fontSize: '12px', color: colors.warmGray, textDecoration: 'none', transition: 'color 0.3s' },
-                  onMouseEnter: (evt) => evt.target.style.color = colors.orange,
-                  onMouseLeave: (evt) => evt.target.style.color = colors.warmGray,
-                }, platform.name)
-              )
+          e('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' } },
+            [
+              { name: 'Spotify', url: 'https://open.spotify.com/artist/7tGYeWAQNzfxtSfbuM4iz9' },
+              { name: 'Apple Music', url: 'https://music.apple.com/us/artist/twopine/1542254883' },
+              { name: 'YouTube', url: 'https://www.youtube.com/@twopine' },
+              { name: 'Bandcamp', url: 'https://twopine.bandcamp.com' },
+            ].map((platform, i) =>
+              e('a', {
+                key: i, href: platform.url, target: '_blank', rel: 'noopener noreferrer',
+                style: {
+                  background: colors.warmWhite, borderRadius: '12px', padding: '24px',
+                  border: '1px solid rgba(93, 64, 55, 0.1)', textDecoration: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '12px', letterSpacing: '2px', color: colors.walnut, transition: 'all 0.3s',
+                },
+                onMouseEnter: (evt) => { evt.target.style.borderColor = colors.orange; evt.target.style.color = colors.orange; },
+                onMouseLeave: (evt) => { evt.target.style.borderColor = 'rgba(93, 64, 55, 0.1)'; evt.target.style.color = colors.walnut; },
+              }, platform.name.toUpperCase())
             )
           )
         )
@@ -1263,17 +798,17 @@
     };
 
     // ============ STORE PAGE ============
-    const StorePage = ({ isMobile }) => {
+    const StorePage = () => {
       const [loaded, setLoaded] = useState(false);
       useEffect(() => { setLoaded(true); }, []);
 
-      return e('section', { style: { minHeight: '100vh', padding: isMobile ? '80px 20px 60px' : '140px 40px 80px', maxWidth: '1000px', margin: '0 auto' } },
+      return e('section', { style: { minHeight: '100vh', padding: '140px 40px 80px', maxWidth: '1000px', margin: '0 auto' } },
         e('div', { style: { opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out' } },
-          e('h1', { style: { fontSize: isMobile ? '24px' : '32px', fontWeight: '400', letterSpacing: isMobile ? '4px' : '8px', marginBottom: '20px', color: colors.walnut } }, 'STORE'),
-          e('p', { style: { fontSize: isMobile ? '13px' : '14px', color: colors.warmGray, lineHeight: '1.8', maxWidth: '600px', marginBottom: isMobile ? '40px' : '60px' } }, 'Merchandise and digital goods.'),
-          e('div', { style: { background: colors.warmWhite, borderRadius: isMobile ? '12px' : '16px', padding: isMobile ? '40px 24px' : '60px 40px', border: '1px solid rgba(93, 64, 55, 0.1)', textAlign: 'center' } },
+          e('h1', { style: { fontSize: '32px', fontWeight: '400', letterSpacing: '8px', marginBottom: '20px', color: colors.walnut } }, 'STORE'),
+          e('p', { style: { fontSize: '14px', color: colors.warmGray, lineHeight: '1.8', maxWidth: '600px', marginBottom: '60px' } }, 'Merchandise and digital goods.'),
+          e('div', { style: { background: colors.warmWhite, borderRadius: '16px', padding: '60px 40px', border: '1px solid rgba(93, 64, 55, 0.1)', textAlign: 'center' } },
             e('div', { style: { fontSize: '11px', letterSpacing: '3px', color: colors.teal, marginBottom: '20px' } }, 'SHOP'),
-            e('h2', { style: { fontSize: isMobile ? '18px' : '24px', fontWeight: '400', letterSpacing: '4px', color: colors.darkBrown, marginBottom: '15px' } }, 'TwoPine Store'),
+            e('h2', { style: { fontSize: '24px', fontWeight: '400', letterSpacing: '4px', color: colors.darkBrown, marginBottom: '15px' } }, 'TwoPine Store'),
             e('p', { style: { fontSize: '13px', color: colors.warmGray, marginBottom: '30px' } }, 'Music, merch, and more available on Bandcamp'),
             e('a', {
               href: 'https://twopine.bandcamp.com/merch', target: '_blank', rel: 'noopener noreferrer',
@@ -1287,7 +822,7 @@
     };
 
     // ============ CONTACT PAGE ============
-    const ContactPage = ({ isMobile }) => {
+    const ContactPage = () => {
       const [loaded, setLoaded] = useState(false);
       const [formData, setFormData] = useState({ name: '', email: '', message: '' });
       const [submitted, setSubmitted] = useState(false);
@@ -1306,10 +841,10 @@
         outline: 'none', transition: 'border-color 0.3s', fontFamily: 'inherit',
       };
 
-      return e('section', { style: { minHeight: '100vh', padding: isMobile ? '80px 20px 60px' : '140px 40px 80px', maxWidth: '600px', margin: '0 auto' } },
+      return e('section', { style: { minHeight: '100vh', padding: '140px 40px 80px', maxWidth: '600px', margin: '0 auto' } },
         e('div', { style: { opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out' } },
-          e('h1', { style: { fontSize: isMobile ? '24px' : '32px', fontWeight: '400', letterSpacing: isMobile ? '4px' : '8px', marginBottom: '20px', color: colors.walnut } }, 'CONTACT'),
-          e('p', { style: { fontSize: isMobile ? '13px' : '14px', color: colors.warmGray, lineHeight: '1.8', marginBottom: isMobile ? '32px' : '50px' } }, 'Questions about products, collaboration inquiries, or just want to say hello? Reach out.'),
+          e('h1', { style: { fontSize: '32px', fontWeight: '400', letterSpacing: '8px', marginBottom: '20px', color: colors.walnut } }, 'CONTACT'),
+          e('p', { style: { fontSize: '14px', color: colors.warmGray, lineHeight: '1.8', marginBottom: '50px' } }, 'Questions about products, collaboration inquiries, or just want to say hello? Reach out.'),
           !submitted
             ? e('div', { style: { display: 'flex', flexDirection: 'column', gap: '24px' } },
                 e('div', null,
@@ -1357,7 +892,7 @@
                 e('div', { style: { fontSize: '48px', marginBottom: '20px' } }, '✓'),
                 e('p', { style: { fontSize: '14px', color: colors.warmGray } }, 'Your email client should open with the message. Thanks for reaching out!')
               ),
-          e('div', { style: { marginTop: isMobile ? '40px' : '60px', paddingTop: '40px', borderTop: '1px solid rgba(93, 64, 55, 0.1)' } },
+          e('div', { style: { marginTop: '60px', paddingTop: '40px', borderTop: '1px solid rgba(93, 64, 55, 0.1)' } },
             e('div', { style: { fontSize: '10px', letterSpacing: '2px', color: colors.walnut, marginBottom: '20px' } }, 'CONNECT'),
             e('div', { style: { display: 'flex', gap: '20px', flexWrap: 'wrap' } },
               [
@@ -1381,23 +916,22 @@
     // ============ MAIN APP ============
     const App = () => {
       const [currentPage, setCurrentPage] = useState('home');
-      const isMobile = useIsMobile();
 
       const renderPage = () => {
         switch (currentPage) {
-          case 'technology': return e(TechnologyPage, { isMobile });
-          case 'music': return e(MusicPage, { isMobile });
-          case 'store': return e(StorePage, { isMobile });
-          case 'contact': return e(ContactPage, { isMobile });
-          default: return e(HomePage, { isMobile });
+          case 'technology': return e(TechnologyPage);
+          case 'music': return e(MusicPage);
+          case 'store': return e(StorePage);
+          case 'contact': return e(ContactPage);
+          default: return e(HomePage);
         }
       };
 
       return e('div', { style: { background: colors.cream, minHeight: '100vh' } },
         e(GrainOverlay),
-        e(Navigation, { currentPage: currentPage, setCurrentPage: setCurrentPage, isMobile: isMobile }),
+        e(Navigation, { currentPage: currentPage, setCurrentPage: setCurrentPage }),
         renderPage(),
-        e(Footer, { isMobile })
+        e(Footer)
       );
     };
 
