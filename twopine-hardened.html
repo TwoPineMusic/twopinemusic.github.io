@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TwoPine — Sound · Software · Hardware</title>
   <!-- React with SRI hashes for integrity verification -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" 
@@ -23,24 +23,9 @@
       font-family: 'Josefin Sans', 'Futura', 'Century Gothic', sans-serif;
       background: #FDF6E3;
       overflow-x: hidden;
-      /* Prevent pull-to-refresh and overscroll on mobile */
-      overscroll-behavior: none;
     }
     a, button { cursor: pointer; }
     ::selection { background: #E07B3C; color: #FDF6E3; }
-    
-    /* Critical: Prevent touch callout and selection on interactive elements */
-    .synth-interactive {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-      touch-action: none;
-    }
-    
-    /* Prevent iOS zoom on double-tap */
-    button, .knob, .notepad, .volume-control {
-      touch-action: manipulation;
-    }
   </style>
 </head>
 <body>
@@ -63,16 +48,9 @@
       darkBrown: '#3D2E24',
     };
 
-    // Mobile detection utility
-    const isTouchDevice = () => {
-      return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    };
-
     // Navigation Component
     const Navigation = ({ currentPage, setCurrentPage }) => {
       const [scrolled, setScrolled] = useState(false);
-      const [menuOpen, setMenuOpen] = useState(false);
-      const isMobile = window.innerWidth <= 768;
 
       useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -83,7 +61,7 @@
       return e('nav', {
         style: {
           position: 'fixed', top: 0, left: 0, right: 0,
-          padding: scrolled ? '16px 20px' : '24px 20px',
+          padding: scrolled ? '16px 40px' : '24px 40px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           zIndex: 1000,
           background: scrolled ? 'rgba(253, 246, 227, 0.95)' : 'transparent',
@@ -99,48 +77,18 @@
           e('span', { style: { color: colors.orange } }, 'Two'),
           e('span', { style: { color: colors.walnut } }, 'Pine')
         ),
-        // Mobile menu button
-        isMobile 
-          ? e('button', {
-              onClick: () => setMenuOpen(!menuOpen),
-              style: {
-                background: 'none', border: 'none', padding: '8px',
-                fontSize: '20px', color: colors.walnut,
-              }
-            }, menuOpen ? '✕' : '☰')
-          : e('div', { style: { display: 'flex', gap: '35px', fontSize: '11px', letterSpacing: '2px' } },
-              ['Technology', 'Music', 'Store', 'Contact'].map(item =>
-                e('a', {
-                  key: item,
-                  onClick: () => setCurrentPage(item.toLowerCase()),
-                  style: {
-                    color: currentPage === item.toLowerCase() ? colors.orange : colors.warmGray,
-                    textDecoration: 'none', transition: 'color 0.3s', textTransform: 'uppercase',
-                    fontWeight: currentPage === item.toLowerCase() ? '600' : '400',
-                  },
-                  onMouseEnter: (evt) => evt.target.style.color = colors.orange,
-                  onMouseLeave: (evt) => { if (currentPage !== item.toLowerCase()) evt.target.style.color = colors.warmGray; }
-                }, item)
-              )
-            ),
-        // Mobile menu dropdown
-        menuOpen && isMobile && e('div', {
-          style: {
-            position: 'absolute', top: '100%', left: 0, right: 0,
-            background: 'rgba(253, 246, 227, 0.98)', backdropFilter: 'blur(10px)',
-            padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px',
-            borderBottom: '1px solid rgba(93, 64, 55, 0.1)',
-          }
-        },
+        e('div', { style: { display: 'flex', gap: '35px', fontSize: '11px', letterSpacing: '2px' } },
           ['Technology', 'Music', 'Store', 'Contact'].map(item =>
             e('a', {
               key: item,
-              onClick: () => { setCurrentPage(item.toLowerCase()); setMenuOpen(false); },
+              onClick: () => setCurrentPage(item.toLowerCase()),
               style: {
                 color: currentPage === item.toLowerCase() ? colors.orange : colors.warmGray,
-                textDecoration: 'none', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase',
+                textDecoration: 'none', transition: 'color 0.3s', textTransform: 'uppercase',
                 fontWeight: currentPage === item.toLowerCase() ? '600' : '400',
-              }
+              },
+              onMouseEnter: (evt) => evt.target.style.color = colors.orange,
+              onMouseLeave: (evt) => { if (currentPage !== item.toLowerCase()) evt.target.style.color = colors.warmGray; }
             }, item)
           )
         )
@@ -150,13 +98,13 @@
     // Footer Component
     const Footer = () => e('footer', {
       style: {
-        padding: '40px 20px', borderTop: '1px solid rgba(93, 64, 55, 0.1)',
+        padding: '40px', borderTop: '1px solid rgba(93, 64, 55, 0.1)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         flexWrap: 'wrap', gap: '20px', background: colors.cream,
       }
     },
       e('div', { style: { fontSize: '10px', letterSpacing: '2px', color: colors.warmGray } }, '© 2025 TWOPINE'),
-      e('div', { style: { display: 'flex', gap: '25px', flexWrap: 'wrap' } },
+      e('div', { style: { display: 'flex', gap: '25px' } },
         [
           { name: 'Bandcamp', url: 'https://twopine.bandcamp.com' },
           { name: 'Spotify', url: 'https://open.spotify.com/artist/7tGYeWAQNzfxtSfbuM4iz9' },
@@ -190,7 +138,6 @@
       const [volume, setVolume] = useState(0.3);
       const [audioInitialized, setAudioInitialized] = useState(false);
       const [activeNotes, setActiveNotes] = useState(new Set());
-      const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
       
       const audioContextRef = useRef(null);
       const masterGainRef = useRef(null);
@@ -199,7 +146,6 @@
       const reverbInputRef = useRef(null);
       const limiterRef = useRef(null);
       const activeVoicesRef = useRef({});
-      const activeTouchesRef = useRef(new Map()); // Track active touches for multi-touch
       
       const MAX_VOICES = 8;
       const MAX_REVERB_FEEDBACK = 0.7;
@@ -214,13 +160,6 @@
       const [activeKnob, setActiveKnob] = useState(null);
       const [dragStart, setDragStart] = useState({ y: 0, value: 0 });
       const lastKnobClickRef = useRef({ name: null, time: 0 });
-
-      // Handle window resize for mobile detection
-      useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
 
       const notes = [
         { name: 'C', freq: 130.81, black: false },
@@ -311,28 +250,10 @@
         return { input: reverbInput, output: reverbOutput };
       };
 
-      // Enhanced audio initialization with mobile support
-      const initAudio = useCallback(async () => {
-        if (audioInitialized && audioContextRef.current) {
-          // CRITICAL: Resume suspended AudioContext (required for iOS/Android)
-          if (audioContextRef.current.state === 'suspended') {
-            try {
-              await audioContextRef.current.resume();
-            } catch (err) {
-              console.error('Failed to resume AudioContext:', err);
-            }
-          }
-          return;
-        }
-        
+      const initAudio = useCallback(() => {
+        if (audioInitialized) return;
         try {
           const ctx = new (window.AudioContext || window.webkitAudioContext)();
-          
-          // CRITICAL: Resume immediately for mobile browsers
-          if (ctx.state === 'suspended') {
-            await ctx.resume();
-          }
-          
           audioContextRef.current = ctx;
           const masterGain = ctx.createGain();
           const dryGain = ctx.createGain();
@@ -368,8 +289,6 @@
       const triggerNote = useCallback((noteIndex) => {
         if (!audioInitialized || isMuted) return;
         const ctx = audioContextRef.current;
-        if (!ctx || ctx.state !== 'running') return;
-        
         const now = ctx.currentTime;
         
         const voiceIds = Object.keys(activeVoicesRef.current);
@@ -437,8 +356,6 @@
       const releaseNote = useCallback((noteIndex) => {
         if (!audioInitialized) return;
         const ctx = audioContextRef.current;
-        if (!ctx) return;
-        
         const now = ctx.currentTime;
         Object.entries(activeVoicesRef.current).forEach(([voiceId, voice]) => {
           if (voice.noteIndex === noteIndex) {
@@ -457,7 +374,6 @@
       useEffect(() => {
         if (!audioInitialized) return;
         const ctx = audioContextRef.current;
-        if (!ctx) return;
         const now = ctx.currentTime;
         const reverbMix = knobValues.reverb;
         dryGainRef.current.gain.setTargetAtTime(0.5 - (reverbMix * 0.3), now, 0.1);
@@ -467,7 +383,6 @@
       useEffect(() => {
         if (!audioInitialized || !masterGainRef.current) return;
         const ctx = audioContextRef.current;
-        if (!ctx) return;
         const now = ctx.currentTime;
         masterGainRef.current.gain.setTargetAtTime(isMuted ? 0 : volume, now, 0.05);
       }, [isMuted, volume, audioInitialized]);
@@ -482,21 +397,8 @@
         return () => { if (audioContextRef.current) audioContextRef.current.close(); };
       }, []);
 
-      // Helper to get Y position from mouse or touch event
-      const getEventY = (evt) => {
-        if (evt.touches && evt.touches.length > 0) {
-          return evt.touches[0].clientY;
-        }
-        if (evt.changedTouches && evt.changedTouches.length > 0) {
-          return evt.changedTouches[0].clientY;
-        }
-        return evt.clientY;
-      };
-
-      // Knob interaction handlers - unified for mouse and touch
-      const handleKnobStart = (knobName, evt) => {
+      const handleKnobMouseDown = (knobName, evt) => {
         evt.preventDefault();
-        evt.stopPropagation();
         initAudio();
         
         const now = Date.now();
@@ -509,84 +411,48 @@
         lastKnobClickRef.current = { name: knobName, time: now };
         
         setActiveKnob(knobName);
-        setDragStart({ y: getEventY(evt), value: knobValues[knobName] });
+        setDragStart({ y: evt.clientY, value: knobValues[knobName] });
       };
 
-      // Unified move handler for knobs
-      const handleKnobMove = useCallback((evt) => {
+      const handleMouseMove = useCallback((evt) => {
         if (activeKnob) {
-          evt.preventDefault();
-          const y = getEventY(evt);
-          const delta = (dragStart.y - y) / 150;
+          const delta = (dragStart.y - evt.clientY) / 150;
           setKnobValues(prev => ({ ...prev, [activeKnob]: Math.max(0, Math.min(1, dragStart.value + delta)) }));
         }
       }, [activeKnob, dragStart]);
 
-      const handleKnobEnd = useCallback(() => setActiveKnob(null), []);
+      const handleMouseUp = useCallback(() => setActiveKnob(null), []);
 
-      // Attach global event listeners for knob dragging
       useEffect(() => {
         if (activeKnob) {
-          // Mouse events
-          window.addEventListener('mousemove', handleKnobMove);
-          window.addEventListener('mouseup', handleKnobEnd);
-          // Touch events
-          window.addEventListener('touchmove', handleKnobMove, { passive: false });
-          window.addEventListener('touchend', handleKnobEnd);
-          window.addEventListener('touchcancel', handleKnobEnd);
-          
+          window.addEventListener('mousemove', handleMouseMove);
+          window.addEventListener('mouseup', handleMouseUp);
           return () => {
-            window.removeEventListener('mousemove', handleKnobMove);
-            window.removeEventListener('mouseup', handleKnobEnd);
-            window.removeEventListener('touchmove', handleKnobMove);
-            window.removeEventListener('touchend', handleKnobEnd);
-            window.removeEventListener('touchcancel', handleKnobEnd);
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
           };
         }
-      }, [activeKnob, handleKnobMove, handleKnobEnd]);
+      }, [activeKnob, handleMouseMove, handleMouseUp]);
 
-      // Volume control state and handlers
       const [volumeDragging, setVolumeDragging] = useState(false);
       const volumeBarRef = useRef(null);
 
       const updateVolumeFromEvent = (evt) => {
         if (volumeBarRef.current) {
           const rect = volumeBarRef.current.getBoundingClientRect();
-          const y = getEventY(evt);
-          setVolume(Math.max(0, Math.min(1, 1 - (y - rect.top) / rect.height)));
+          setVolume(Math.max(0, Math.min(1, 1 - (evt.clientY - rect.top) / rect.height)));
         }
-      };
-
-      const handleVolumeStart = (evt) => {
-        evt.preventDefault();
-        evt.stopPropagation();
-        initAudio();
-        setVolumeDragging(true);
-        updateVolumeFromEvent(evt);
       };
 
       useEffect(() => {
         if (volumeDragging) {
-          const handleMove = (evt) => {
-            evt.preventDefault();
-            updateVolumeFromEvent(evt);
-          };
+          const handleMove = (evt) => updateVolumeFromEvent(evt);
           const handleUp = () => setVolumeDragging(false);
-          
-          // Mouse events
           window.addEventListener('mousemove', handleMove);
           window.addEventListener('mouseup', handleUp);
-          // Touch events
-          window.addEventListener('touchmove', handleMove, { passive: false });
-          window.addEventListener('touchend', handleUp);
-          window.addEventListener('touchcancel', handleUp);
-          
           return () => {
             window.removeEventListener('mousemove', handleMove);
             window.removeEventListener('mouseup', handleUp);
-            window.removeEventListener('touchmove', handleMove);
-            window.removeEventListener('touchend', handleUp);
-            window.removeEventListener('touchcancel', handleUp);
           };
         }
       }, [volumeDragging]);
@@ -604,14 +470,11 @@
         return 'M ' + points.join(' L ');
       };
 
-      // Knob component with touch support
       const Knob = ({ name, label, color, size }) => {
-        size = size || (isMobile ? 44 : 50);
+        size = size || 50;
         return e('div', { style: { textAlign: 'center' } },
           e('div', {
-            className: 'synth-interactive knob',
-            onMouseDown: (evt) => handleKnobStart(name, evt),
-            onTouchStart: (evt) => handleKnobStart(name, evt),
+            onMouseDown: (evt) => handleKnobMouseDown(name, evt),
             style: {
               width: size + 'px', height: size + 'px', borderRadius: '50%',
               background: 'linear-gradient(145deg, #F5F0E6 0%, #DDD7CB 100%)',
@@ -622,7 +485,6 @@
               transform: 'rotate(' + ((knobValues[name] * 270) - 135) + 'deg)',
               transition: activeKnob === name ? 'none' : 'transform 0.1s ease-out',
               cursor: 'ns-resize',
-              touchAction: 'none',
             }
           },
             e('div', {
@@ -641,83 +503,18 @@
               }
             })
           ),
-          e('div', { style: { fontSize: isMobile ? '6px' : '7px', letterSpacing: '1px', color: colors.warmGray, textTransform: 'uppercase' } }, label)
+          e('div', { style: { fontSize: '7px', letterSpacing: '1px', color: colors.warmGray, textTransform: 'uppercase' } }, label)
         );
       };
 
-      // NotePad component with FULL touch support
       const NotePad = ({ note, index }) => {
         const isActive = activeNotes.has(index);
-        const padRef = useRef(null);
-        
-        // Handle touch/mouse start
-        const handleStart = (evt) => {
-          evt.preventDefault();
-          evt.stopPropagation();
-          initAudio();
-          triggerNote(index);
-          
-          // Track this touch
-          if (evt.touches) {
-            for (let i = 0; i < evt.changedTouches.length; i++) {
-              activeTouchesRef.current.set(evt.changedTouches[i].identifier, index);
-            }
-          }
-        };
-        
-        // Handle touch/mouse end
-        const handleEnd = (evt) => {
-          evt.preventDefault();
-          evt.stopPropagation();
-          
-          if (evt.changedTouches) {
-            for (let i = 0; i < evt.changedTouches.length; i++) {
-              const touchId = evt.changedTouches[i].identifier;
-              if (activeTouchesRef.current.get(touchId) === index) {
-                releaseNote(index);
-                activeTouchesRef.current.delete(touchId);
-              }
-            }
-          } else {
-            releaseNote(index);
-          }
-        };
-        
-        // Handle touch cancel (e.g., incoming call)
-        const handleCancel = (evt) => {
-          if (evt.changedTouches) {
-            for (let i = 0; i < evt.changedTouches.length; i++) {
-              const touchId = evt.changedTouches[i].identifier;
-              if (activeTouchesRef.current.get(touchId) === index) {
-                releaseNote(index);
-                activeTouchesRef.current.delete(touchId);
-              }
-            }
-          }
-        };
-        
-        // Handle mouse leave (desktop only)
-        const handleLeave = () => {
-          if (isActive) releaseNote(index);
-        };
-        
-        const padWidth = isMobile ? (note.black ? 28 : 32) : (note.black ? 36 : 42);
-        const padHeight = isMobile ? (note.black ? 40 : 50) : (note.black ? 50 : 60);
-        
         return e('button', {
-          ref: padRef,
-          className: 'synth-interactive notepad',
-          // Mouse events
-          onMouseDown: handleStart,
-          onMouseUp: handleEnd,
-          onMouseLeave: handleLeave,
-          // Touch events - CRITICAL for mobile
-          onTouchStart: handleStart,
-          onTouchEnd: handleEnd,
-          onTouchCancel: handleCancel,
+          onMouseDown: () => { initAudio(); triggerNote(index); },
+          onMouseUp: () => releaseNote(index),
+          onMouseLeave: () => { if (isActive) releaseNote(index); },
           style: {
-            width: padWidth + 'px',
-            height: padHeight + 'px',
+            width: note.black ? '36px' : '42px', height: note.black ? '50px' : '60px',
             borderRadius: '6px', border: 'none',
             background: isActive
               ? 'linear-gradient(145deg, ' + colors.orange + ' 0%, #c9693a 100%)'
@@ -729,48 +526,26 @@
               : note.black
                 ? '0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)'
                 : '0 4px 8px rgba(93, 64, 55, 0.2), inset 0 1px 0 rgba(255,255,255,0.8)',
-            cursor: 'pointer', 
-            transition: 'all 0.08s ease-out',
+            cursor: 'pointer', transition: 'all 0.08s ease-out',
             transform: isActive ? 'translateY(2px)' : 'translateY(0)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', 
-            padding: '6px',
-            touchAction: 'none',
-            WebkitTapHighlightColor: 'transparent',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '6px',
           }
         },
-          e('span', { 
-            style: { 
-              fontSize: isMobile ? '7px' : '8px', 
-              fontWeight: '600', 
-              color: isActive ? colors.cream : note.black ? colors.walnutLight : colors.warmGray,
-              pointerEvents: 'none',
-            } 
-          }, note.name)
+          e('span', { style: { fontSize: '8px', fontWeight: '600', color: isActive ? colors.cream : note.black ? colors.walnutLight : colors.warmGray } }, note.name)
         );
       };
-
-      // Responsive sizing
-      const synthWidth = isMobile ? '95vw' : '680px';
-      const synthMaxWidth = isMobile ? '100%' : '85vw';
-      const synthPadding = isMobile ? '8px' : '10px';
-      const controlPadding = isMobile ? '10px 12px' : '16px 20px';
 
       return e('section', {
         style: {
           minHeight: '100vh', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', 
-          padding: isMobile ? '80px 10px 40px' : '100px 20px 60px',
-          cursor: activeKnob || volumeDragging ? 'ns-resize' : 'default', 
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
+          alignItems: 'center', justifyContent: 'center', padding: '100px 20px 60px',
+          cursor: activeKnob || volumeDragging ? 'ns-resize' : 'default', userSelect: 'none',
         }
       },
         // Starburst
         e('div', {
           style: {
-            position: 'fixed', top: '8%', right: '8%', 
-            width: isMobile ? '60px' : '120px', 
-            height: isMobile ? '60px' : '120px',
+            position: 'fixed', top: '8%', right: '8%', width: '120px', height: '120px',
             opacity: loaded ? 0.08 : 0, transition: 'opacity 1.5s ease-out 0.5s',
             transform: 'rotate(' + (time * 2) + 'deg)', pointerEvents: 'none',
           }
@@ -784,34 +559,24 @@
         e('div', {
           style: {
             opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.97)',
-            transition: 'all 1s ease-out 0.4s', display: 'flex', gap: isMobile ? '8px' : '16px', alignItems: 'stretch',
-            flexDirection: isMobile ? 'column' : 'row',
+            transition: 'all 1s ease-out 0.4s', display: 'flex', gap: '16px', alignItems: 'stretch',
           }
         },
-          // Volume - repositioned for mobile
+          // Volume
           e('div', {
             style: {
-              display: 'flex', 
-              flexDirection: isMobile ? 'row' : 'column', 
-              alignItems: 'center', 
-              justifyContent: isMobile ? 'center' : 'space-between',
-              gap: isMobile ? '16px' : '0',
-              padding: isMobile ? '12px 16px' : '16px 12px', 
-              background: 'linear-gradient(180deg, ' + colors.walnut + ' 0%, ' + colors.darkBrown + ' 100%)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between',
+              padding: '16px 12px', background: 'linear-gradient(180deg, ' + colors.walnut + ' 0%, ' + colors.darkBrown + ' 100%)',
               borderRadius: '10px', boxShadow: '0 20px 40px -15px rgba(61, 46, 36, 0.4)',
-              order: isMobile ? 1 : 0,
             }
           },
             e('button', {
               onClick: () => { initAudio(); setIsMuted(!isMuted); },
-              onTouchEnd: (evt) => { evt.preventDefault(); initAudio(); setIsMuted(!isMuted); },
-              className: 'synth-interactive',
               style: {
                 width: '40px', height: '40px', borderRadius: '50%', border: 'none',
                 background: isMuted ? colors.warmWhite : 'linear-gradient(135deg, ' + colors.orange + ' 0%, #c9693a 100%)',
                 boxShadow: isMuted ? 'inset 0 2px 4px rgba(0,0,0,0.1)' : '0 4px 15px rgba(224, 123, 60, 0.5)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
-                touchAction: 'manipulation',
               }
             },
               e('svg', { width: '18', height: '18', viewBox: '0 0 24 24', fill: 'none', stroke: isMuted ? colors.warmGray : colors.cream, strokeWidth: '2' },
@@ -823,60 +588,20 @@
             ),
             e('div', {
               ref: volumeBarRef,
-              className: 'synth-interactive volume-control',
-              onMouseDown: handleVolumeStart,
-              onTouchStart: handleVolumeStart,
-              style: { 
-                width: isMobile ? '120px' : '6px', 
-                height: isMobile ? '6px' : '100px', 
-                background: colors.darkBrown, 
-                borderRadius: '3px', 
-                position: 'relative', 
-                cursor: isMobile ? 'ew-resize' : 'ns-resize',
-                touchAction: 'none',
-              }
+              onMouseDown: (evt) => { evt.preventDefault(); initAudio(); setVolumeDragging(true); updateVolumeFromEvent(evt); },
+              style: { width: '6px', height: '100px', background: colors.darkBrown, borderRadius: '3px', position: 'relative', cursor: 'ns-resize' }
             },
-              // Volume fill
-              e('div', { 
-                style: { 
-                  position: 'absolute', 
-                  ...(isMobile 
-                    ? { left: 0, top: 0, bottom: 0, width: (volume * 100) + '%' }
-                    : { bottom: 0, left: 0, right: 0, height: (volume * 100) + '%' }
-                  ),
-                  background: 'linear-gradient(to ' + (isMobile ? 'right' : 'top') + ', ' + colors.teal + ', ' + colors.mustard + ')', 
-                  borderRadius: '3px', 
-                  transition: volumeDragging ? 'none' : 'all 0.1s',
-                  pointerEvents: 'none',
-                } 
-              }),
-              // Volume thumb
-              e('div', { 
-                style: { 
-                  position: 'absolute', 
-                  ...(isMobile 
-                    ? { left: 'calc(' + (volume * 100) + '% - 5px)', top: '50%', transform: 'translateY(-50%)' }
-                    : { bottom: 'calc(' + (volume * 100) + '% - 5px)', left: '50%', transform: 'translateX(-50%)' }
-                  ),
-                  width: isMobile ? '10px' : '14px', 
-                  height: isMobile ? '14px' : '10px', 
-                  background: colors.warmWhite, 
-                  borderRadius: '2px', 
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)', 
-                  transition: volumeDragging ? 'none' : 'all 0.1s',
-                  pointerEvents: 'none',
-                } 
-              })
+              e('div', { style: { position: 'absolute', bottom: 0, left: 0, right: 0, height: (volume * 100) + '%', background: 'linear-gradient(to top, ' + colors.teal + ', ' + colors.mustard + ')', borderRadius: '3px', transition: volumeDragging ? 'none' : 'height 0.1s' } }),
+              e('div', { style: { position: 'absolute', bottom: 'calc(' + (volume * 100) + '% - 5px)', left: '50%', transform: 'translateX(-50%)', width: '14px', height: '10px', background: colors.warmWhite, borderRadius: '2px', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', transition: volumeDragging ? 'none' : 'bottom 0.1s' } })
             ),
             e('div', { style: { fontSize: '7px', letterSpacing: '1px', color: colors.walnutLight } }, 'VOL')
           ),
           // Main device
           e('div', {
             style: {
-              width: synthWidth,
-              maxWidth: synthMaxWidth,
+              width: '680px', maxWidth: '85vw',
               background: 'linear-gradient(180deg, ' + colors.walnut + ' 0%, ' + colors.darkBrown + ' 100%)',
-              borderRadius: '14px', padding: synthPadding,
+              borderRadius: '14px', padding: '10px',
               boxShadow: '0 30px 60px -20px rgba(61, 46, 36, 0.4), 0 50px 100px -30px rgba(61, 46, 36, 0.3)',
             }
           },
@@ -884,14 +609,14 @@
             e('div', {
               style: {
                 background: 'linear-gradient(90deg, ' + colors.walnutLight + ' 0%, #9C8B75 20%, ' + colors.walnutLight + ' 40%, #7D6B55 60%, ' + colors.walnutLight + ' 80%, #9C8B75 100%)',
-                borderRadius: '10px 10px 0 0', padding: isMobile ? '12px 14px 10px' : '16px 20px 12px', position: 'relative',
+                borderRadius: '10px 10px 0 0', padding: '16px 20px 12px', position: 'relative',
               }
             },
-              e('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: isMobile ? '8px' : '12px' } },
-                e('div', { style: { fontSize: isMobile ? '9px' : '10px', letterSpacing: '4px', color: colors.darkBrown, textTransform: 'uppercase', fontWeight: '600' } }, 'TwoPine')
+              e('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: '12px' } },
+                e('div', { style: { fontSize: '10px', letterSpacing: '4px', color: colors.darkBrown, textTransform: 'uppercase', fontWeight: '600' } }, 'TwoPine')
               ),
-              e('div', { style: { background: '#1a1a18', borderRadius: '6px', padding: isMobile ? '8px' : '10px', boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)' } },
-                e('svg', { width: '100%', height: isMobile ? '45' : '60', viewBox: '0 0 300 80', preserveAspectRatio: 'none' },
+              e('div', { style: { background: '#1a1a18', borderRadius: '6px', padding: '10px', boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)' } },
+                e('svg', { width: '100%', height: '60', viewBox: '0 0 300 80', preserveAspectRatio: 'none' },
                   [...Array(5)].map((_, i) => e('line', { key: 'h' + i, x1: '0', y1: i * 20, x2: '300', y2: i * 20, stroke: colors.teal, strokeWidth: '0.5', opacity: '0.2' })),
                   [...Array(15)].map((_, i) => e('line', { key: 'v' + i, x1: i * 20, y1: '0', x2: i * 20, y2: '80', stroke: colors.teal, strokeWidth: '0.5', opacity: '0.2' })),
                   e('path', { d: generateWave(0, 15), fill: 'none', stroke: colors.orange, strokeWidth: '1.5', opacity: '0.4' }),
@@ -900,78 +625,57 @@
               )
             ),
             // Control panel
-            e('div', { style: { background: 'linear-gradient(180deg, ' + colors.warmWhite + ' 0%, #E8E2D6 100%)', borderRadius: '0 0 10px 10px', padding: isMobile ? '12px 10px' : '16px 20px' } },
-              // Controls - responsive grid for mobile
-              e('div', { style: { 
-                display: isMobile ? 'grid' : 'flex', 
-                gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'none',
-                gap: isMobile ? '8px' : '12px', 
-                marginBottom: isMobile ? '12px' : '16px' 
-              } },
+            e('div', { style: { background: 'linear-gradient(180deg, ' + colors.warmWhite + ' 0%, #E8E2D6 100%)', borderRadius: '0 0 10px 10px', padding: '16px 20px' } },
+              // Controls
+              e('div', { style: { display: 'flex', gap: '12px', marginBottom: '16px' } },
                 // OSC 1
-                e('div', { style: { flex: 1, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: isMobile ? '8px' : '12px' } },
-                  e('div', { style: { fontSize: isMobile ? '7px' : '8px', letterSpacing: '2px', color: colors.orange, marginBottom: isMobile ? '6px' : '10px', textAlign: 'center' } }, 'OSC 1'),
-                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: isMobile ? '6px' : '8px' } },
-                    e(Knob, { name: 'osc1Freq', label: 'TUNE', color: colors.orange, size: isMobile ? 32 : 38 }),
-                    e(Knob, { name: 'osc1Mix', label: 'MIX', color: colors.orange, size: isMobile ? 32 : 38 })
+                e('div', { style: { flex: 1, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '12px' } },
+                  e('div', { style: { fontSize: '8px', letterSpacing: '2px', color: colors.orange, marginBottom: '10px', textAlign: 'center' } }, 'OSC 1'),
+                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '8px' } },
+                    e(Knob, { name: 'osc1Freq', label: 'TUNE', color: colors.orange, size: 38 }),
+                    e(Knob, { name: 'osc1Mix', label: 'MIX', color: colors.orange, size: 38 })
                   )
                 ),
                 // OSC 2
-                e('div', { style: { flex: 1, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: isMobile ? '8px' : '12px' } },
-                  e('div', { style: { fontSize: isMobile ? '7px' : '8px', letterSpacing: '2px', color: colors.teal, marginBottom: isMobile ? '6px' : '10px', textAlign: 'center' } }, 'OSC 2'),
-                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: isMobile ? '6px' : '8px' } },
-                    e(Knob, { name: 'osc2Freq', label: 'TUNE', color: colors.teal, size: isMobile ? 32 : 38 }),
-                    e(Knob, { name: 'osc2Mix', label: 'MIX', color: colors.teal, size: isMobile ? 32 : 38 })
+                e('div', { style: { flex: 1, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '12px' } },
+                  e('div', { style: { fontSize: '8px', letterSpacing: '2px', color: colors.teal, marginBottom: '10px', textAlign: 'center' } }, 'OSC 2'),
+                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '8px' } },
+                    e(Knob, { name: 'osc2Freq', label: 'TUNE', color: colors.teal, size: 38 }),
+                    e(Knob, { name: 'osc2Mix', label: 'MIX', color: colors.teal, size: 38 })
                   )
                 ),
                 // Filter
-                e('div', { style: { flex: 1, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: isMobile ? '8px' : '12px' } },
-                  e('div', { style: { fontSize: isMobile ? '7px' : '8px', letterSpacing: '2px', color: colors.mustard, marginBottom: isMobile ? '6px' : '10px', textAlign: 'center' } }, 'FILTER'),
-                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: isMobile ? '6px' : '8px' } },
-                    e(Knob, { name: 'filterCutoff', label: 'CUT', color: colors.mustard, size: isMobile ? 32 : 38 }),
-                    e(Knob, { name: 'filterRes', label: 'RES', color: colors.mustard, size: isMobile ? 32 : 38 })
+                e('div', { style: { flex: 1, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '12px' } },
+                  e('div', { style: { fontSize: '8px', letterSpacing: '2px', color: colors.mustard, marginBottom: '10px', textAlign: 'center' } }, 'FILTER'),
+                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '8px' } },
+                    e(Knob, { name: 'filterCutoff', label: 'CUT', color: colors.mustard, size: 38 }),
+                    e(Knob, { name: 'filterRes', label: 'RES', color: colors.mustard, size: 38 })
                   )
                 ),
                 // ADSR
-                e('div', { style: { flex: 1.5, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: isMobile ? '8px' : '12px', gridColumn: isMobile ? 'span 2' : 'auto' } },
-                  e('div', { style: { fontSize: isMobile ? '7px' : '8px', letterSpacing: '2px', color: colors.walnut, marginBottom: isMobile ? '6px' : '10px', textAlign: 'center' } }, 'ENVELOPE'),
-                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: isMobile ? '4px' : '6px' } },
-                    e(Knob, { name: 'attack', label: 'A', color: colors.walnut, size: isMobile ? 28 : 34 }),
-                    e(Knob, { name: 'decay', label: 'D', color: colors.walnut, size: isMobile ? 28 : 34 }),
-                    e(Knob, { name: 'sustain', label: 'S', color: colors.walnut, size: isMobile ? 28 : 34 }),
-                    e(Knob, { name: 'release', label: 'R', color: colors.walnut, size: isMobile ? 28 : 34 })
+                e('div', { style: { flex: 1.5, background: 'rgba(93, 64, 55, 0.05)', borderRadius: '8px', padding: '12px' } },
+                  e('div', { style: { fontSize: '8px', letterSpacing: '2px', color: colors.walnut, marginBottom: '10px', textAlign: 'center' } }, 'ENVELOPE'),
+                  e('div', { style: { display: 'flex', justifyContent: 'center', gap: '6px' } },
+                    e(Knob, { name: 'attack', label: 'A', color: colors.walnut, size: 34 }),
+                    e(Knob, { name: 'decay', label: 'D', color: colors.walnut, size: 34 }),
+                    e(Knob, { name: 'sustain', label: 'S', color: colors.walnut, size: 34 }),
+                    e(Knob, { name: 'release', label: 'R', color: colors.walnut, size: 34 })
                   )
                 )
               ),
-              // Note Pads - scrollable on mobile if needed
-              e('div', { 
-                style: { 
-                  background: colors.darkBrown, 
-                  borderRadius: '8px', 
-                  padding: isMobile ? '10px 8px' : '14px 16px', 
-                  marginBottom: isMobile ? '10px' : '14px',
-                  overflowX: isMobile ? 'auto' : 'visible',
-                  WebkitOverflowScrolling: 'touch',
-                } 
-              },
-                e('div', { 
-                  style: { 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    gap: isMobile ? '4px' : '6px',
-                    minWidth: isMobile ? 'max-content' : 'auto',
-                  } 
-                },
+              // Note Pads
+              e('div', { style: { background: colors.darkBrown, borderRadius: '8px', padding: '14px 16px', marginBottom: '14px' } },
+                e('div', { style: { display: 'flex', justifyContent: 'center', gap: '6px' } },
                   notes.map((note, i) => e(NotePad, { key: i, note: note, index: i }))
                 )
               ),
-              // Bottom controls
-              e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? '10px' : '0' } },
-                e('div', { style: { display: 'flex', gap: isMobile ? '8px' : '10px', alignItems: 'flex-end' } },
-                  e(Knob, { name: 'reverb', label: 'REVERB', color: colors.teal, size: isMobile ? 30 : 36 }),
-                  e(Knob, { name: 'amplitude', label: 'AMP', color: colors.orange, size: isMobile ? 30 : 36 })
+              // Bottom
+              e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                e('div', { style: { display: 'flex', gap: '10px', alignItems: 'flex-end' } },
+                  e(Knob, { name: 'reverb', label: 'REVERB', color: colors.teal, size: 36 }),
+                  e(Knob, { name: 'amplitude', label: 'AMP', color: colors.orange, size: 36 })
                 ),
-                e('div', { style: { display: 'flex', gap: isMobile ? '3px' : '5px', padding: isMobile ? '6px 8px' : '8px 12px', background: colors.darkBrown, borderRadius: '5px' } },
+                e('div', { style: { display: 'flex', gap: '5px', padding: '8px 12px', background: colors.darkBrown, borderRadius: '5px' } },
                   [0.4, 0.7, 0.9, 0.6, 0.8, 0.5].map((level, i) => {
                     const hasNotes = activeNotes.size > 0;
                     const animatedLevel = hasNotes ? (level + Math.sin(time * 3 + i * 0.5) * 0.2) * knobValues.amplitude : 0.15;
@@ -979,21 +683,21 @@
                       [...Array(5)].map((_, j) => {
                         const isLit = j / 5 < animatedLevel;
                         const segmentColor = j >= 4 ? colors.orange : j >= 2 ? colors.mustard : colors.teal;
-                        return e('div', { key: j, style: { width: isMobile ? '6px' : '8px', height: isMobile ? '3px' : '4px', borderRadius: '1px', background: isLit ? segmentColor : 'rgba(255,255,255,0.1)', boxShadow: isLit ? '0 0 4px ' + segmentColor : 'none', transition: 'all 0.08s' } });
+                        return e('div', { key: j, style: { width: '8px', height: '4px', borderRadius: '1px', background: isLit ? segmentColor : 'rgba(255,255,255,0.1)', boxShadow: isLit ? '0 0 4px ' + segmentColor : 'none', transition: 'all 0.08s' } });
                       })
                     );
                   })
                 )
               ),
-              e('div', { style: { textAlign: 'center', marginTop: isMobile ? '8px' : '10px', fontSize: isMobile ? '6px' : '7px', color: colors.warmGray, opacity: 0.5, letterSpacing: '1px' } },
-                isMuted ? '🔇 UNMUTE TO PLAY' : (isTouchDevice() ? '🔊 TAP PADS TO PLAY' : '🔊 CLICK PADS TO PLAY'), ' • DRAG KNOBS TO ADJUST'
+              e('div', { style: { textAlign: 'center', marginTop: '10px', fontSize: '7px', color: colors.warmGray, opacity: 0.5, letterSpacing: '1px' } },
+                isMuted ? '🔇 UNMUTE TO PLAY' : '🔊 CLICK PADS TO PLAY', ' • DRAG KNOBS TO ADJUST'
               )
             )
           )
         ),
         // Brand
-        e('div', { style: { marginTop: isMobile ? '24px' : '40px', textAlign: 'center', opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out 0.8s' } },
-          e('h1', { style: { fontSize: 'clamp(20px, 4vw, 40px)', fontWeight: '400', letterSpacing: isMobile ? '6px' : '10px', textTransform: 'uppercase' } },
+        e('div', { style: { marginTop: '40px', textAlign: 'center', opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out 0.8s' } },
+          e('h1', { style: { fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: '400', letterSpacing: '10px', textTransform: 'uppercase' } },
             e('span', { style: { color: colors.orange } }, 'Two'),
             e('span', { style: { color: colors.walnut } }, 'Pine')
           )
@@ -1012,23 +716,23 @@
         { name: 'TwoPine Web Synth', status: 'AVAILABLE NOW', description: 'The synthesizer you just played. A fully functional dual-oscillator instrument running entirely in your browser.', specs: ['Web Audio API', 'ADSR Envelope', 'Reverb FX', 'Touch Ready'], link: '#' },
       ];
 
-      return e('section', { style: { minHeight: '100vh', padding: '140px 20px 80px', maxWidth: '1000px', margin: '0 auto' } },
+      return e('section', { style: { minHeight: '100vh', padding: '140px 40px 80px', maxWidth: '1000px', margin: '0 auto' } },
         e('div', { style: { opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out' } },
-          e('h1', { style: { fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: '400', letterSpacing: '8px', marginBottom: '20px', color: colors.walnut } }, 'TECHNOLOGY'),
+          e('h1', { style: { fontSize: '32px', fontWeight: '400', letterSpacing: '8px', marginBottom: '20px', color: colors.walnut } }, 'TECHNOLOGY'),
           e('p', { style: { fontSize: '14px', color: colors.warmGray, lineHeight: '1.8', maxWidth: '600px', marginBottom: '60px' } }, 'We design instruments that bridge the gap between vintage analog character and modern workflow integration. Every product is built to inspire.'),
           e('div', { style: { display: 'flex', flexDirection: 'column', gap: '40px' } },
             products.map((product, i) =>
               e('div', {
                 key: i,
                 style: {
-                  background: colors.warmWhite, borderRadius: '16px', padding: 'clamp(20px, 5vw, 40px)',
+                  background: colors.warmWhite, borderRadius: '16px', padding: '40px',
                   border: '1px solid rgba(93, 64, 55, 0.1)',
                   opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)',
                   transition: 'all 0.8s ease-out ' + (0.2 + i * 0.1) + 's',
                 }
               },
                 e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' } },
-                  e('h2', { style: { fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: '500', letterSpacing: '3px', color: colors.darkBrown } }, product.name),
+                  e('h2', { style: { fontSize: '20px', fontWeight: '500', letterSpacing: '3px', color: colors.darkBrown } }, product.name),
                   product.link
                     ? e('a', {
                         href: product.link,
@@ -1056,12 +760,12 @@
       const [loaded, setLoaded] = useState(false);
       useEffect(() => { setLoaded(true); }, []);
 
-      return e('section', { style: { minHeight: '100vh', padding: '140px 20px 80px', maxWidth: '1000px', margin: '0 auto' } },
+      return e('section', { style: { minHeight: '100vh', padding: '140px 40px 80px', maxWidth: '1000px', margin: '0 auto' } },
         e('div', { style: { opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out' } },
-          e('h1', { style: { fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: '400', letterSpacing: '8px', marginBottom: '60px', color: colors.walnut } }, 'MUSIC'),
-          e('div', { style: { background: colors.warmWhite, borderRadius: '16px', padding: 'clamp(30px, 5vw, 60px) clamp(20px, 4vw, 40px)', border: '1px solid rgba(93, 64, 55, 0.1)', textAlign: 'center', marginBottom: '40px' } },
+          e('h1', { style: { fontSize: '32px', fontWeight: '400', letterSpacing: '8px', marginBottom: '60px', color: colors.walnut } }, 'MUSIC'),
+          e('div', { style: { background: colors.warmWhite, borderRadius: '16px', padding: '60px 40px', border: '1px solid rgba(93, 64, 55, 0.1)', textAlign: 'center', marginBottom: '40px' } },
             e('div', { style: { fontSize: '11px', letterSpacing: '3px', color: colors.orange, marginBottom: '20px' } }, 'LISTEN NOW'),
-            e('h2', { style: { fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: '400', letterSpacing: '4px', color: colors.darkBrown, marginBottom: '30px' } }, 'TwoPine on Bandcamp'),
+            e('h2', { style: { fontSize: '24px', fontWeight: '400', letterSpacing: '4px', color: colors.darkBrown, marginBottom: '30px' } }, 'TwoPine on Bandcamp'),
             e('a', {
               href: 'https://twopine.bandcamp.com', target: '_blank', rel: 'noopener noreferrer',
               style: { display: 'inline-block', padding: '14px 32px', background: colors.walnut, color: colors.cream, textDecoration: 'none', borderRadius: '8px', fontSize: '11px', letterSpacing: '2px', transition: 'all 0.3s' },
@@ -1069,7 +773,7 @@
               onMouseLeave: (evt) => evt.target.style.background = colors.walnut,
             }, 'EXPLORE RELEASES')
           ),
-          e('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px' } },
+          e('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' } },
             [
               { name: 'Spotify', url: 'https://open.spotify.com/artist/7tGYeWAQNzfxtSfbuM4iz9' },
               { name: 'Apple Music', url: 'https://music.apple.com/us/artist/twopine/1542254883' },
@@ -1098,13 +802,13 @@
       const [loaded, setLoaded] = useState(false);
       useEffect(() => { setLoaded(true); }, []);
 
-      return e('section', { style: { minHeight: '100vh', padding: '140px 20px 80px', maxWidth: '1000px', margin: '0 auto' } },
+      return e('section', { style: { minHeight: '100vh', padding: '140px 40px 80px', maxWidth: '1000px', margin: '0 auto' } },
         e('div', { style: { opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out' } },
-          e('h1', { style: { fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: '400', letterSpacing: '8px', marginBottom: '20px', color: colors.walnut } }, 'STORE'),
+          e('h1', { style: { fontSize: '32px', fontWeight: '400', letterSpacing: '8px', marginBottom: '20px', color: colors.walnut } }, 'STORE'),
           e('p', { style: { fontSize: '14px', color: colors.warmGray, lineHeight: '1.8', maxWidth: '600px', marginBottom: '60px' } }, 'Merchandise and digital goods.'),
-          e('div', { style: { background: colors.warmWhite, borderRadius: '16px', padding: 'clamp(30px, 5vw, 60px) clamp(20px, 4vw, 40px)', border: '1px solid rgba(93, 64, 55, 0.1)', textAlign: 'center' } },
+          e('div', { style: { background: colors.warmWhite, borderRadius: '16px', padding: '60px 40px', border: '1px solid rgba(93, 64, 55, 0.1)', textAlign: 'center' } },
             e('div', { style: { fontSize: '11px', letterSpacing: '3px', color: colors.teal, marginBottom: '20px' } }, 'SHOP'),
-            e('h2', { style: { fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: '400', letterSpacing: '4px', color: colors.darkBrown, marginBottom: '15px' } }, 'TwoPine Store'),
+            e('h2', { style: { fontSize: '24px', fontWeight: '400', letterSpacing: '4px', color: colors.darkBrown, marginBottom: '15px' } }, 'TwoPine Store'),
             e('p', { style: { fontSize: '13px', color: colors.warmGray, marginBottom: '30px' } }, 'Music, merch, and more available on Bandcamp'),
             e('a', {
               href: 'https://twopine.bandcamp.com/merch', target: '_blank', rel: 'noopener noreferrer',
@@ -1137,9 +841,9 @@
         outline: 'none', transition: 'border-color 0.3s', fontFamily: 'inherit',
       };
 
-      return e('section', { style: { minHeight: '100vh', padding: '140px 20px 80px', maxWidth: '600px', margin: '0 auto' } },
+      return e('section', { style: { minHeight: '100vh', padding: '140px 40px 80px', maxWidth: '600px', margin: '0 auto' } },
         e('div', { style: { opacity: loaded ? 1 : 0, transform: loaded ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease-out' } },
-          e('h1', { style: { fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: '400', letterSpacing: '8px', marginBottom: '20px', color: colors.walnut } }, 'CONTACT'),
+          e('h1', { style: { fontSize: '32px', fontWeight: '400', letterSpacing: '8px', marginBottom: '20px', color: colors.walnut } }, 'CONTACT'),
           e('p', { style: { fontSize: '14px', color: colors.warmGray, lineHeight: '1.8', marginBottom: '50px' } }, 'Questions about products, collaboration inquiries, or just want to say hello? Reach out.'),
           !submitted
             ? e('div', { style: { display: 'flex', flexDirection: 'column', gap: '24px' } },
