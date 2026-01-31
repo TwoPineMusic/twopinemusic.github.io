@@ -186,6 +186,7 @@
       const [volume, setVolume] = useState(0.3);
       const [audioInitialized, setAudioInitialized] = useState(false);
       const [activeNotes, setActiveNotes] = useState(new Set());
+      const [showMobileStart, setShowMobileStart] = useState(isMobile); // Show tap to start on mobile
       
       const audioContextRef = useRef(null);
       const masterGainRef = useRef(null);
@@ -208,6 +209,7 @@
       const [activeKnob, setActiveKnob] = useState(null);
       const [dragStart, setDragStart] = useState({ y: 0, value: 0 });
       const lastKnobClickRef = useRef({ name: null, time: 0 });
+      const activeTouchNotesRef = useRef(new Set()); // Track notes triggered by touch
 
       const notes = [
         { name: 'C', freq: 130.81, black: false },
@@ -299,10 +301,22 @@
       };
 
       const initAudio = useCallback(() => {
-        if (audioInitialized) return;
+        if (audioInitialized) {
+          // Always try to resume on mobile - iOS requires this after any pause
+          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume();
+          }
+          return;
+        }
         try {
           const ctx = new (window.AudioContext || window.webkitAudioContext)();
           audioContextRef.current = ctx;
+          
+          // iOS requires resume after creation
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
+          
           const masterGain = ctx.createGain();
           const dryGain = ctx.createGain();
           const reverbGain = ctx.createGain();
@@ -329,6 +343,7 @@
           reverbGainRef.current = reverbGain;
           reverbInputRef.current = reverb.input;
           setAudioInitialized(true);
+          setShowMobileStart(false); // Hide mobile start prompt
         } catch (err) {
           console.error('Web Audio init failed:', err);
         }
@@ -418,6 +433,31 @@
         });
         setActiveNotes(prev => { const next = new Set(prev); next.delete(noteIndex); return next; });
       }, [audioInitialized]);
+
+      // Release all notes triggered by touch - prevents stuck notes
+      const releaseAllTouchNotes = useCallback(() => {
+        activeTouchNotesRef.current.forEach(noteIndex => {
+          releaseNote(noteIndex);
+        });
+        activeTouchNotesRef.current.clear();
+      }, [releaseNote]);
+
+      // Global touch end handler to catch releases outside of pads
+      useEffect(() => {
+        if (!isMobile) return;
+        const handleGlobalTouchEnd = (evt) => {
+          // If no touches remain, release all notes
+          if (evt.touches.length === 0) {
+            releaseAllTouchNotes();
+          }
+        };
+        window.addEventListener('touchend', handleGlobalTouchEnd);
+        window.addEventListener('touchcancel', handleGlobalTouchEnd);
+        return () => {
+          window.removeEventListener('touchend', handleGlobalTouchEnd);
+          window.removeEventListener('touchcancel', handleGlobalTouchEnd);
+        };
+      }, [isMobile, releaseAllTouchNotes]);
 
       useEffect(() => {
         if (!audioInitialized) return;
@@ -580,12 +620,28 @@
         const padWidth = isMobile ? (note.black ? '26px' : '32px') : (note.black ? '36px' : '42px');
         const padHeight = isMobile ? (note.black ? '44px' : '52px') : (note.black ? '50px' : '60px');
         
+        const handleTouchStart = (evt) => {
+          evt.preventDefault();
+          evt.stopPropagation();
+          initAudio();
+          activeTouchNotesRef.current.add(index);
+          triggerNote(index);
+        };
+        
+        const handleTouchEnd = (evt) => {
+          evt.preventDefault();
+          evt.stopPropagation();
+          activeTouchNotesRef.current.delete(index);
+          releaseNote(index);
+        };
+        
         return e('button', {
           onMouseDown: () => { initAudio(); triggerNote(index); },
           onMouseUp: () => releaseNote(index),
           onMouseLeave: () => { if (isActive) releaseNote(index); },
-          onTouchStart: (evt) => { evt.preventDefault(); initAudio(); triggerNote(index); },
-          onTouchEnd: (evt) => { evt.preventDefault(); releaseNote(index); },
+          onTouchStart: handleTouchStart,
+          onTouchEnd: handleTouchEnd,
+          onTouchCancel: handleTouchEnd,
           style: {
             width: padWidth, height: padHeight,
             borderRadius: '6px', border: 'none',
@@ -603,9 +659,10 @@
             transform: isActive ? 'translateY(2px)' : 'translateY(0)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
             padding: isMobile ? '4px' : '6px', touchAction: 'none',
+            WebkitUserSelect: 'none', userSelect: 'none',
           }
         },
-          e('span', { style: { fontSize: isMobile ? '7px' : '8px', fontWeight: '600', color: isActive ? colors.cream : note.black ? colors.walnutLight : colors.warmGray } }, note.name)
+          e('span', { style: { fontSize: isMobile ? '7px' : '8px', fontWeight: '600', color: isActive ? colors.cream : note.black ? colors.walnutLight : colors.warmGray, pointerEvents: 'none' } }, note.name)
         );
       };
 
@@ -615,9 +672,33 @@
           style: {
             minHeight: '100vh', display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'flex-start', padding: '70px 12px 30px',
-            userSelect: 'none', touchAction: 'pan-y',
+            userSelect: 'none', touchAction: 'pan-y', position: 'relative',
           }
         },
+          // Mobile audio start overlay
+          showMobileStart && e('div', {
+            onTouchStart: (evt) => { evt.preventDefault(); initAudio(); setIsMuted(false); },
+            onClick: () => { initAudio(); setIsMuted(false); },
+            style: {
+              position: 'absolute', inset: 0, zIndex: 100,
+              background: 'rgba(253, 246, 227, 0.95)', backdropFilter: 'blur(4px)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              padding: '40px', touchAction: 'manipulation',
+            }
+          },
+            e('div', { style: { 
+              width: '80px', height: '80px', borderRadius: '50%', marginBottom: '24px',
+              background: 'linear-gradient(135deg, ' + colors.orange + ' 0%, #c9693a 100%)',
+              boxShadow: '0 8px 24px rgba(224, 123, 60, 0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }},
+              e('svg', { width: '36', height: '36', viewBox: '0 0 24 24', fill: colors.cream },
+                e('path', { d: 'M8 5v14l11-7z' })
+              )
+            ),
+            e('div', { style: { fontSize: '14px', letterSpacing: '3px', color: colors.walnut, marginBottom: '8px', textTransform: 'uppercase', fontWeight: '500' } }, 'TAP TO START'),
+            e('div', { style: { fontSize: '11px', color: colors.warmGray, letterSpacing: '1px' } }, 'Enable audio to play')
+          ),
           // Mobile Synth
           e('div', {
             style: {
@@ -656,17 +737,19 @@
               // Control panel
               e('div', { style: { background: 'linear-gradient(180deg, ' + colors.warmWhite + ' 0%, #E8E2D6 100%)', borderRadius: '0 0 8px 8px', padding: '12px' } },
                 // Volume and Mute row
-                e('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', padding: '8px 12px', background: colors.darkBrown, borderRadius: '6px' } },
+                e('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', padding: '10px 12px', background: colors.darkBrown, borderRadius: '6px' } },
                   e('button', {
-                    onClick: () => { initAudio(); setIsMuted(!isMuted); },
+                    onTouchStart: (evt) => { evt.preventDefault(); evt.stopPropagation(); initAudio(); setIsMuted(!isMuted); },
+                    onClick: (evt) => { evt.preventDefault(); initAudio(); setIsMuted(!isMuted); },
                     style: {
-                      width: '36px', height: '36px', borderRadius: '50%', border: 'none', flexShrink: 0,
+                      width: '48px', height: '48px', borderRadius: '50%', border: 'none', flexShrink: 0,
                       background: isMuted ? colors.warmWhite : 'linear-gradient(135deg, ' + colors.orange + ' 0%, #c9693a 100%)',
                       boxShadow: isMuted ? 'inset 0 2px 4px rgba(0,0,0,0.1)' : '0 4px 12px rgba(224, 123, 60, 0.5)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent',
                     }
                   },
-                    e('svg', { width: '16', height: '16', viewBox: '0 0 24 24', fill: 'none', stroke: isMuted ? colors.warmGray : colors.cream, strokeWidth: '2' },
+                    e('svg', { width: '22', height: '22', viewBox: '0 0 24 24', fill: 'none', stroke: isMuted ? colors.warmGray : colors.cream, strokeWidth: '2', style: { pointerEvents: 'none' } },
                       e('path', { d: 'M11 5L6 9H2v6h4l5 4V5z' }),
                       isMuted
                         ? [e('line', { key: 'l1', x1: '23', y1: '9', x2: '17', y2: '15' }), e('line', { key: 'l2', x1: '17', y1: '9', x2: '23', y2: '15' })]
@@ -678,12 +761,12 @@
                     ref: volumeBarRef,
                     onMouseDown: (evt) => { evt.preventDefault(); initAudio(); setVolumeDragging(true); updateVolumeFromEvent(evt); },
                     onTouchStart: (evt) => { evt.preventDefault(); initAudio(); setVolumeDragging(true); updateVolumeFromEvent(evt); },
-                    style: { flex: 1, height: '8px', background: colors.darkBrown, borderRadius: '4px', position: 'relative', cursor: 'pointer', touchAction: 'none', border: '1px solid rgba(255,255,255,0.1)' }
+                    style: { flex: 1, height: '12px', background: colors.darkBrown, borderRadius: '6px', position: 'relative', cursor: 'pointer', touchAction: 'none', border: '1px solid rgba(255,255,255,0.1)' }
                   },
-                    e('div', { style: { position: 'absolute', top: 0, left: 0, bottom: 0, width: (volume * 100) + '%', background: 'linear-gradient(to right, ' + colors.teal + ', ' + colors.mustard + ')', borderRadius: '4px', transition: volumeDragging ? 'none' : 'width 0.1s' } }),
-                    e('div', { style: { position: 'absolute', top: '50%', left: 'calc(' + (volume * 100) + '% - 7px)', transform: 'translateY(-50%)', width: '14px', height: '14px', background: colors.warmWhite, borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', transition: volumeDragging ? 'none' : 'left 0.1s' } })
+                    e('div', { style: { position: 'absolute', top: 0, left: 0, bottom: 0, width: (volume * 100) + '%', background: 'linear-gradient(to right, ' + colors.teal + ', ' + colors.mustard + ')', borderRadius: '6px', transition: volumeDragging ? 'none' : 'width 0.1s' } }),
+                    e('div', { style: { position: 'absolute', top: '50%', left: 'calc(' + (volume * 100) + '% - 9px)', transform: 'translateY(-50%)', width: '18px', height: '18px', background: colors.warmWhite, borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', transition: volumeDragging ? 'none' : 'left 0.1s' } })
                   ),
-                  e('div', { style: { fontSize: '7px', letterSpacing: '1px', color: colors.walnutLight, flexShrink: 0 } }, 'VOL')
+                  e('div', { style: { fontSize: '8px', letterSpacing: '1px', color: colors.walnutLight, flexShrink: 0 } }, 'VOL')
                 ),
                 // Controls in 2x2 grid
                 e('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' } },
