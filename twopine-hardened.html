@@ -830,7 +830,7 @@
 
       const handleSubmit = (evt) => {
         evt.preventDefault();
-        const mailtoLink = 'mailto:contact@twopinemusic.com?subject=Message from ' + formData.name + '&body=' + encodeURIComponent(formData.message) + '%0A%0AFrom: ' + formData.email;
+        const mailtoLink = 'mailto:twopinemusic@gmail.com?subject=Message from ' + formData.name + '&body=' + encodeURIComponent(formData.message) + '%0A%0AFrom: ' + formData.email;
         window.location.href = mailtoLink;
         setSubmitted(true);
       };
